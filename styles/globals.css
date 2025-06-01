@@ -110,3 +110,45 @@ html.dark .hover\:bg-gray-700:hover {
     /* z-index: 50; is already set by Tailwind class 'z-50' */
     /* Additional styles if needed, e.g. for specific transitions not covered by Tailwind */
 }
+
+
+/* Keyboard handling variables and classes */
+:root {
+  --keyboard-inset-height: 0px; /* Default value, updated by JS */
+}
+
+/*
+  When the keyboard is active, adjust modals to fit the new visual viewport.
+  This primarily affects their max-height to ensure content remains scrollable and accessible.
+*/
+body.keyboard-active .modal-overlay.active .modal {
+  /* 100% of visualViewport height minus some padding to prevent touching edges */
+  max-height: calc(100% - var(--keyboard-inset-height) - 2rem);
+  /* Modals typically are also overflow-y: auto, so this makes them scroll internally if needed */
+  /* margin-bottom could also be used to push the modal up, but max-height is often more robust for content visibility. */
+  /* margin-bottom: var(--keyboard-inset-height); */
+}
+
+/*
+  Adjust the Floating Action Button's position to remain visible above the keyboard.
+  Original Tailwind classes: bottom-6 right-6 sm:bottom-8 sm:right-8
+  1.5rem = 6 (24px), 2rem = 8 (32px)
+*/
+body.keyboard-active #addChapterFab {
+  bottom: calc(1.5rem + var(--keyboard-inset-height));
+  transition: bottom 0.2s ease-out; /* Smooth transition for FAB position */
+}
+@media (min-width: 640px) { /* sm breakpoint */
+  body.keyboard-active #addChapterFab {
+    bottom: calc(2rem + var(--keyboard-inset-height));
+  }
+}
+
+/*
+  Adjust the main content area where the editor resides.
+  Adding padding-bottom allows its own scrollbar to reveal content that would otherwise be hidden by the keyboard.
+*/
+body.keyboard-active div.flex-1.overflow-hidden > main#contentArea {
+   padding-bottom: var(--keyboard-inset-height);
+   /* The main#contentArea is already overflow:auto, so this padding will enable scrolling its content up. */
+}

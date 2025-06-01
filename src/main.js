@@ -48,6 +48,7 @@ let saveStatusTimeout;
 let appSettings = loadAppSettings(); // Initial load
 let currentNovelSearchTerm = '';
 let currentChapterSearchTerm = '';
+let currentFocusedInput = null; // Track focused input for keyboard handling
 
 // References to search input elements (initialized when views are rendered)
 let novelSearchInputEl, novelSearchClearBtnEl;
@@ -99,7 +100,65 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   setupGlobalEventListeners();
   setupGestures();
+  initViewportKeyboardHandler(); // Initialize keyboard visibility handling
 });
+
+
+function initViewportKeyboardHandler() {
+  if (!window.visualViewport) {
+    console.warn("VisualViewport API not supported. Keyboard handling might be suboptimal.");
+    return;
+  }
+
+  const updateKeyboardState = () => {
+    const vv = window.visualViewport;
+    const keyboardThreshold = 100; // Min pixels to consider it a keyboard
+    let keyboardInsetHeight = Math.max(0, window.innerHeight - vv.height);
+
+    if (keyboardInsetHeight > keyboardThreshold) {
+      document.documentElement.style.setProperty('--keyboard-inset-height', `${keyboardInsetHeight}px`);
+      document.body.classList.add('keyboard-active');
+
+      // If an input is focused, try to scroll it into view after layout adjusts
+      if (currentFocusedInput) {
+        setTimeout(() => {
+          // Check if keyboard is still active and input still focused (or exists)
+          if (document.body.classList.contains('keyboard-active') && currentFocusedInput && document.contains(currentFocusedInput)) {
+            currentFocusedInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        }, 100); // Delay to allow layout to settle after keyboard class is applied.
+      }
+
+    } else {
+      document.documentElement.style.setProperty('--keyboard-inset-height', '0px');
+      document.body.classList.remove('keyboard-active');
+    }
+  };
+
+  window.visualViewport.addEventListener('resize', debounce(updateKeyboardState, 100));
+  updateKeyboardState(); // Initial check
+
+  document.addEventListener('focusin', (e) => {
+    if (e.target.matches('input:not([type="file"]):not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, [contenteditable="true"]')) {
+      currentFocusedInput = e.target;
+      // If keyboard is already active when focusing a new input, immediately try to scroll.
+      if (document.body.classList.contains('keyboard-active')) {
+         setTimeout(() => { // give a moment for focus to fully shift
+            if (currentFocusedInput && document.contains(currentFocusedInput)) {
+                 currentFocusedInput.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+         }, 50);
+      }
+    }
+  });
+
+  document.addEventListener('focusout', (e) => {
+     if (e.target === currentFocusedInput) {
+       currentFocusedInput = null;
+     }
+  });
+}
+
 
 function applyTheme(theme) {
     const htmlEl = document.documentElement;
