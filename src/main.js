@@ -1,3 +1,5 @@
+
+
 import { 
     loadNovels, saveNovels, sanitizeFilename, fileToDataURL, 
     showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime, 
@@ -27,7 +29,8 @@ const CONTENT_AREA_ID = 'contentArea';
 const NOVEL_TITLE_DISPLAY_ID = 'novelTitleDisplay';
 const EDIT_NOVEL_TITLE_BTN_ID = 'editNovelTitleBtn';
 const CHAPTER_LIST_ID = 'chapterList';
-const ADD_CHAPTER_BTN_ID = 'addChapterBtn';
+// const ADD_CHAPTER_BTN_ID = 'addChapterBtn'; // Old button ID, no longer used from drawer
+const ADD_CHAPTER_FAB_ID = 'addChapterFab'; // New FAB ID
 const EDITOR_CONTAINER_ID = 'editor';
 const EDITOR_STATUS_BAR_ID = 'editorStatusBar';
 const WORD_COUNT_DISPLAY_ID = 'wordCountDisplay';
@@ -120,7 +123,7 @@ function applyTheme(theme) {
 function applyEditorScale(scale) {
     const validScale = Math.min(2, Math.max(0.75, parseFloat(scale) || 1));
     document.documentElement.style.setProperty('--editor-font-scale', validScale);
-    appSettings.editorScale = validScale;
+    appSettings.editorScale = validScale; // Update global appSettings object
 }
 
 
@@ -507,6 +510,12 @@ function renderLibraryView() {
   }
   document.getElementById(THEME_TOGGLE_BTN_ID)?.classList.remove('hidden');
 
+  const addChapterFab = document.getElementById(ADD_CHAPTER_FAB_ID);
+  if (addChapterFab) {
+    addChapterFab.classList.add('hidden');
+    addChapterFab.onclick = null; // Remove handler
+  }
+
 
   const contentArea = document.getElementById(CONTENT_AREA_ID);
   if (!contentArea) return;
@@ -607,7 +616,7 @@ function renderLibraryView() {
                </div>`;
 
           li.innerHTML = `
-            <div class.flex items-center min-w-0"> <!-- min-w-0 for truncate -->
+            <div class="flex items-center min-w-0"> <!-- min-w-0 for truncate -->
                 ${coverImageHTML}
                 <div class="truncate">
                   <h3 class="font-semibold text-color-onSurface text-lg truncate pointer-events-none">${novel.title || 'Untitled Novel'}</h3>
@@ -875,6 +884,12 @@ async function renderEditorView() {
   document.getElementById(SETTINGS_BTN_ID)?.classList.add('hidden'); 
   document.getElementById(THEME_TOGGLE_BTN_ID)?.classList.remove('hidden'); 
 
+  const addChapterFab = document.getElementById(ADD_CHAPTER_FAB_ID);
+  if (addChapterFab) {
+    addChapterFab.classList.remove('hidden');
+    addChapterFab.onclick = handleNewChapterFabClick; // Attach new chapter logic
+  }
+
 
   if (window.innerWidth >= 768 && appSettings.autoOpenDrawerDesktop) { // md breakpoint
     openChapterDrawer();
@@ -918,6 +933,50 @@ async function renderEditorView() {
     await loadChapterIntoEditor(chapterToLoad);
   }
 }
+
+async function handleNewChapterFabClick() {
+    const novel = novels.find(n => n.id === currentNovelId);
+    if (!novel) return;
+
+    if (!(await confirmDiscardChanges())) return;
+    const nextOrder = novel.chapters.length + 1;
+    const title = await showPrompt({
+        title: `New Chapter Title`,
+        placeholder: `Chapter ${nextOrder}`
+    });
+    if (title === null) return;
+    triggerHapticFeedback([40]);
+    const now = new Date().toISOString();
+    const newChapter = {
+        id: crypto.randomUUID(),
+        title: title.trim() || `Chapter ${nextOrder}`,
+        order: nextOrder,
+        contentHTML: '<p></p>',
+        createdAt: now,
+        updatedAt: now,
+    };
+    novel.chapters.push(newChapter);
+    touchNovel(novel.id);
+    saveNovels(novels);
+    updateSaveStatus("Chapter created", "success", 1500);
+
+    const previousCurrentChapterId = currentChapterId;
+    currentChapterId = newChapter.id;
+    updateURL(novel.id, currentChapterId);
+
+    renderChapterList(novel); // Re-render list to show new chapter
+
+    if (previousCurrentChapterId !== newChapter.id && previousCurrentChapterId !== null) {
+        await saveCurrentChapterData();
+    }
+    await loadChapterIntoEditor(newChapter);
+    closeChapterDrawerOnMobile(); // Close drawer if open on mobile after adding
+    
+    const chapterListEl = document.getElementById(CHAPTER_LIST_ID);
+    const newChapterLi = chapterListEl?.querySelector(`li[data-chapter-id="${newChapter.id}"]`);
+    newChapterLi?.focus(); // Focus the new chapter in the list
+}
+
 
 // -------------------- RENDER CHAPTER LIST --------------------
 function renderChapterList(novel) {
@@ -970,7 +1029,7 @@ function renderChapterList(novel) {
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m9.75 0A2.25 2.25 0 0 0 19.5 2.25m0 0A2.25 2.25 0 0 0 21.75 0M4.5 6.375A2.25 2.25 0 0 1 2.25 4.5m0 0A2.25 2.25 0 0 1 0 2.25m5.625 17.25a2.25 2.25 0 0 1-2.25-2.25V6.375c0-.621.504-1.125 1.125-1.125h12.75c.621 0 1.125.504 1.125 1.125V19.5a2.25 2.25 0 0 1-2.25-2.25M10.5 18.75h3" />
         </svg>
         <p class="text-base font-medium text-color-onSurface mb-1">No Chapters Here</p>
-        <p class="text-xs">Tap the "+ New Chapter" button below to add your first one.</p>
+        <p class="text-xs">Use the floating '+' button to add your first one.</p>
     `;
     listEl.appendChild(emptyStateDiv);
     if (chapterSortable) { 
@@ -1127,7 +1186,7 @@ function renderChapterList(novel) {
 
 
     if (chapterSortable) chapterSortable.destroy();
-    if (chaptersToDisplay.length > 0) { // Only init sortable if there are items to sort
+    if (chaptersToDisplay.length > 0 && !currentChapterSearchTerm) { // Only init sortable if not searching and items exist
         chapterSortable = Sortable.create(listEl, {
           animation: 150,
           ghostClass: 'sortable-ghost', 
@@ -1138,24 +1197,8 @@ function renderChapterList(novel) {
             triggerHapticFeedback([20,30,20]);
             const { oldDraggableIndex, newDraggableIndex } = evt;
 
-            // Need to map displayed indices back to original novel.chapters indices if search is active
-            let originalOldIndex, originalNewIndex;
-
-            if (currentChapterSearchTerm) {
-                const oldChapterId = chaptersToDisplay[oldDraggableIndex].id;
-                // Find the target position in the full list based on the ID of the chapter at newDraggableIndex
-                const chapterAtNewDisplayIndex = chaptersToDisplay[newDraggableIndex];
-                
-                originalOldIndex = novel.chapters.findIndex(ch => ch.id === oldChapterId);
-                originalNewIndex = chapterAtNewDisplayIndex ? novel.chapters.findIndex(ch => ch.id === chapterAtNewDisplayIndex.id) : novel.chapters.length -1;
-
-            } else {
-                originalOldIndex = oldDraggableIndex;
-                originalNewIndex = newDraggableIndex;
-            }
-
-            const movedChapter = novel.chapters.splice(originalOldIndex, 1)[0];
-            novel.chapters.splice(originalNewIndex, 0, movedChapter);
+            const movedChapter = novel.chapters.splice(oldDraggableIndex, 1)[0];
+            novel.chapters.splice(newDraggableIndex, 0, movedChapter);
             
             renumberChapters(novel.chapters); 
             touchNovel(novel.id);
@@ -1171,50 +1214,13 @@ function renderChapterList(novel) {
             }, 700); 
           }
         });
+    } else if (chapterSortable) { // Destroy if searching or no items
+        chapterSortable.destroy();
+        chapterSortable = null;
     }
   }
 
-  const addChapterBtn = document.getElementById(ADD_CHAPTER_BTN_ID);
-  if (addChapterBtn) {
-    addChapterBtn.onclick = async () => {
-        if (!(await confirmDiscardChanges())) return;
-        const nextOrder = novel.chapters.length + 1;
-        const title = await showPrompt({
-          title: `New Chapter Title`,
-          placeholder: `Chapter ${nextOrder}`
-        });
-        if (title === null) return; 
-        triggerHapticFeedback([40]);
-        const now = new Date().toISOString();
-        const newChapter = {
-          id: crypto.randomUUID(),
-          title: title.trim() || `Chapter ${nextOrder}`,
-          order: nextOrder,
-          contentHTML: '<p></p>', 
-          createdAt: now,
-          updatedAt: now,
-        };
-        novel.chapters.push(newChapter);
-        // No need to renumber if always adding to end with nextOrder
-        touchNovel(novel.id);
-        saveNovels(novels);
-        updateSaveStatus("Chapter created", 'success', 1500);
-
-        const previousCurrentChapterId = currentChapterId; 
-        currentChapterId = newChapter.id; 
-        updateURL(novel.id, currentChapterId);
-
-        renderChapterList(novel); 
-
-        if (previousCurrentChapterId !== newChapter.id && previousCurrentChapterId !== null) {
-            await saveCurrentChapterData(); 
-        }
-        await loadChapterIntoEditor(newChapter); 
-        closeChapterDrawerOnMobile();
-        const newChapterLi = listEl.querySelector(`li[data-chapter-id="${newChapter.id}"]`);
-        newChapterLi?.focus(); // Focus the new chapter in the list
-      };
-  }
+  // The old addChapterBtn logic is removed as the button is now a FAB handled in renderEditorView
    setupChapterListGestures(); 
    setupChapterSearch(novel); 
 }
@@ -1238,7 +1244,7 @@ function openChapterDrawer() {
   setTimeout(() => { 
     const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID);
     const firstChapterItem = drawer.querySelector(`#${CHAPTER_LIST_ID} li[tabindex="0"], #${CHAPTER_LIST_ID} li[role="option"]`); // Prefer explicitly focusable or first option
-    const addChapterBtn = document.getElementById(ADD_CHAPTER_BTN_ID);
+    // const addChapterBtn = document.getElementById(ADD_CHAPTER_BTN_ID); // Old button, not relevant for focus here
     const editNovelTitleBtn = document.getElementById(EDIT_NOVEL_TITLE_BTN_ID);
     const backToLibraryBtn = document.getElementById(BACK_TO_LIBRARY_BTN_ID);
 
@@ -1246,9 +1252,7 @@ function openChapterDrawer() {
         chapterSearchInput.focus();
     } else if (firstChapterItem) { 
         firstChapterItem.focus();
-    } else if (addChapterBtn && addChapterBtn.offsetParent !== null) {
-      addChapterBtn.focus();
-    } else if (editNovelTitleBtn && editNovelTitleBtn.offsetParent !== null) {
+    } else if (editNovelTitleBtn && editNovelTitleBtn.offsetParent !== null) { // Focus edit title if no chapters & no search
       editNovelTitleBtn.focus();
     } else if (backToLibraryBtn && backToLibraryBtn.offsetParent !== null) {
       backToLibraryBtn.focus();
@@ -1516,9 +1520,9 @@ function clearEditorPlaceholder() {
                 </div>
             `;
             const createFirstChapterBtn = document.getElementById('createFirstChapterBtnInPlaceholder');
-            const addChapterButtonMain = document.getElementById(ADD_CHAPTER_BTN_ID);
-            if (createFirstChapterBtn && addChapterButtonMain) { 
-                createFirstChapterBtn.onclick = addChapterButtonMain.onclick; // Reuse existing handler
+            const addChapterFab = document.getElementById(ADD_CHAPTER_FAB_ID); // Target FAB
+            if (createFirstChapterBtn && addChapterFab) { 
+                createFirstChapterBtn.onclick = () => addChapterFab.click(); // Trigger FAB click
                 createFirstChapterBtn.focus(); 
             }
         } else { 
@@ -1956,8 +1960,8 @@ async function openExportModal() {
         if (newLanguage === 'other') {
             newLanguage = languageOtherInputEl.value.trim();
             // Validate BCP 47 basic structure (e.g., xx or xx-XX)
-            if (!/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(newLanguage)) {
-                 await showConfirm({title: "Invalid Language Code", message: "Please enter a valid BCP 47 language code (e.g., 'en', 'fr-CA').", okText:"OK"});
+            if (newLanguage && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(newLanguage)) { // Allow empty
+                 await showConfirm({title: "Invalid Language Code", message: "Please enter a valid BCP 47 language code (e.g., 'en', 'fr-CA'), or leave empty to use default.", okText:"OK"});
                  languageOtherInputEl.focus();
                  return false; // Indicate validation failure, don't proceed with save/export
             }
@@ -2237,7 +2241,6 @@ function destroyEditorGestures() {
         hammerInstances.editor.destroy();
         hammerInstances.editor = null;
     }
-    // document.documentElement.style.setProperty('--editor-font-scale', appSettings.editorScale); // Persist last setting
 }
 
 
@@ -2253,10 +2256,9 @@ function setupEditorGestures(targetElement) {
         });
         hammerInstances.editor.on('pinch', ev => {
             let newScale = initialScaleOnPinchStart * ev.scale;
-            applyEditorScale(newScale); // applyEditorScale also clamps
+            applyEditorScale(newScale); // applyEditorScale also clamps and updates appSettings.editorScale
         });
         hammerInstances.editor.on('pinchend', () => {
-           // Current scale is already in appSettings via applyEditorScale
            saveAppSettings(appSettings); // Save the new scale
         });
     }
@@ -2291,7 +2293,7 @@ let activeContextMenu = null;
 function closeActiveContextMenu() {
     if (activeContextMenu) {
         const parent = activeContextMenu.parentNode;
-        if (parent) { 
+        if (parent && parent.contains(activeContextMenu)) { 
             parent.removeChild(activeContextMenu);
         }
         activeContextMenu = null; 
@@ -2387,14 +2389,12 @@ async function showChapterContextMenu(chapter, x, y) {
         }
         break;
       case 'moveUp':
-        if (actualIdx > 0) { 
+        if (actualIdx > 0 && chapter.order > 1) { 
           triggerHapticFeedback([20,30,20]);
-          // Find the chapter that is visually above the current one (after sorting by order)
           const chapterToSwapWithOrder = novel.chapters[actualIdx].order - 1;
           const swapIdx = novel.chapters.findIndex(c => c.order === chapterToSwapWithOrder);
           if (swapIdx !== -1) {
-            [novel.chapters[actualIdx], novel.chapters[swapIdx]] = [novel.chapters[swapIdx], novel.chapters[actualIdx]];
-            renumberChapters(novel.chapters);
+            [novel.chapters[actualIdx].order, novel.chapters[swapIdx].order] = [novel.chapters[swapIdx].order, novel.chapters[actualIdx].order];
             touchNovel(novel.id);
             saveNovels(novels);
             renderChapterList(novel);
@@ -2403,13 +2403,12 @@ async function showChapterContextMenu(chapter, x, y) {
         }
         break;
       case 'moveDown':
-        if (actualIdx < novel.chapters.length - 1) { 
+         if (actualIdx < novel.chapters.length - 1 && chapter.order < novel.chapters.length) { 
           triggerHapticFeedback([20,30,20]);
           const chapterToSwapWithOrder = novel.chapters[actualIdx].order + 1;
           const swapIdx = novel.chapters.findIndex(c => c.order === chapterToSwapWithOrder);
            if (swapIdx !== -1) {
-            [novel.chapters[actualIdx], novel.chapters[swapIdx]] = [novel.chapters[swapIdx], novel.chapters[actualIdx]];
-            renumberChapters(novel.chapters);
+            [novel.chapters[actualIdx].order, novel.chapters[swapIdx].order] = [novel.chapters[swapIdx].order, novel.chapters[actualIdx].order];
             touchNovel(novel.id);
             saveNovels(novels);
             renderChapterList(novel);
@@ -2466,7 +2465,7 @@ async function showChapterContextMenu(chapter, x, y) {
 
 function handlePostChapterDeletionFocus() {
     const drawer = document.getElementById(CHAPTER_DRAWER_ID);
-    if (drawer?.offsetParent === null) return; 
+    if (drawer?.offsetParent === null) return; // Drawer not visible, don't shift focus
 
     if (currentChapterId) {
         const listEl = document.getElementById(CHAPTER_LIST_ID);
@@ -2477,11 +2476,16 @@ function handlePostChapterDeletionFocus() {
             return; 
         }
     }
-    const addChapterBtnEl = document.getElementById(ADD_CHAPTER_BTN_ID);
-    if (addChapterBtnEl) {
-        addChapterBtnEl.focus();
+    // If no current chapter, or active chapter not found (e.g., list is empty after delete)
+    const addChapterFabEl = document.getElementById(ADD_CHAPTER_FAB_ID);
+    if (addChapterFabEl && addChapterFabEl.offsetParent !== null && !addChapterFabEl.classList.contains('hidden')) {
+        addChapterFabEl.focus();
     } else {
-        // Fallback to chapter search or drawer itself if other elements missing
-        document.getElementById(CHAPTER_SEARCH_INPUT_ID)?.focus() || drawer?.focus();
+        const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID);
+        if (chapterSearchInput && chapterSearchInput.offsetParent !== null) {
+            chapterSearchInput.focus();
+        } else {
+            drawer?.focus(); // Last resort
+        }
     }
 }

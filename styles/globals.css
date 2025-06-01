@@ -103,3 +103,10 @@ img {
 html.dark .hover\:bg-gray-700:hover {
     background-color: #374151; /* Re-specify for dark if needed, or use var */
 }
+
+/* FAB specific - though Tailwind classes mostly cover this */
+#addChapterFab {
+    /* Ensure z-index is high enough if other fixed elements exist */
+    /* z-index: 50; is already set by Tailwind class 'z-50' */
+    /* Additional styles if needed, e.g. for specific transitions not covered by Tailwind */
+}

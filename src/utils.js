@@ -41,7 +41,7 @@ export function loadAppSettings() {
     if (!['light', 'dark'].includes(loadedSettings.theme)) {
         loadedSettings.theme = defaults.theme;
     }
-    if (typeof loadedSettings.editorScale !== 'number' || isNaN(loadedSettings.editorScale)) {
+    if (typeof loadedSettings.editorScale !== 'number' || isNaN(loadedSettings.editorScale) || loadedSettings.editorScale < 0.75 || loadedSettings.editorScale > 2) {
         loadedSettings.editorScale = defaults.editorScale;
     }
     return { ...defaults, ...loadedSettings };
@@ -287,8 +287,8 @@ export function showConfirm({ title = 'Are you sure?', message = '', okText = 'O
     const cancelBtn = overlay.querySelector('#confirmCancelBtn');
     
     const focusableElements = Array.from(modalElement.querySelectorAll(FOCUSABLE_ELEMENTS_SELECTOR)).filter(el => el.offsetParent !== null);
-    const firstFocusableElement = focusableElements.find(el => el === cancelBtn || el === okBtn) || cancelBtn; // Prefer cancel/ok
-    const lastFocusableElement = focusableElements.reverse().find(el => el === okBtn || el === cancelBtn) || okBtn;
+    const firstFocusableElement = focusableElements.find(el => el === okBtn || el === cancelBtn) || okBtn; // Prefer ok/cancel
+    const lastFocusableElement = focusableElements.slice().reverse().find(el => el === okBtn || el === cancelBtn) || cancelBtn; // Prefer ok/cancel in reverse
     
     okBtn?.focus(); 
 
@@ -305,12 +305,10 @@ export function showConfirm({ title = 'Are you sure?', message = '', okText = 'O
     };
 
     const handleKeyDown = (ev) => {
-        if (ev.key === 'Enter' && document.activeElement === okBtn) { 
+        if (ev.key === 'Enter' && (document.activeElement === okBtn || document.activeElement === cancelBtn) ) { // Enter on either button
             ev.preventDefault();
-            handleOk();
-        } else if (ev.key === 'Enter' && document.activeElement === cancelBtn) {
-            ev.preventDefault();
-            handleCancel();
+            if(document.activeElement === okBtn) handleOk();
+            else handleCancel();
         } else if (ev.key === 'Escape') {
             handleCancel();
         } else if (ev.key === 'Tab') {
