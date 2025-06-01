@@ -1,5 +1,6 @@
 
 
+
 import { 
     loadNovels, saveNovels, sanitizeFilename, fileToDataURL, 
     showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime, 
@@ -775,7 +776,7 @@ function renderLibraryView() {
                 updateSaveStatus("Novels restored successfully!", "success");
             }
         } catch (e) {
-            console.error("Restore error:", e);
+            console.error("Restore error:", e, e.stack);
             updateSaveStatus("Restore failed: Could not parse backup file.", 'error', 4000);
         }
         restoreFileInput.value = ''; 
@@ -938,38 +939,60 @@ async function handleNewChapterFabClick() {
     const novel = novels.find(n => n.id === currentNovelId);
     if (!novel) return;
 
-    if (!(await confirmDiscardChanges())) return;
+    const chapterToSaveIdBeforeSwitch = currentChapterId;
+    const editorContentBeforeSwitch = editorInstance ? editorInstance.getData() : null;
+
+    if (isEditorDirty && chapterToSaveIdBeforeSwitch && editorContentBeforeSwitch !== null) {
+        const novelToUpdate = novels.find(n => n.id === currentNovelId); // currentNovelId is still old here
+        if (novelToUpdate) {
+            const chapterObjectToUpdate = novelToUpdate.chapters.find(c => c.id === chapterToSaveIdBeforeSwitch);
+            if (chapterObjectToUpdate) {
+                chapterObjectToUpdate.contentHTML = editorContentBeforeSwitch;
+                chapterObjectToUpdate.updatedAt = new Date().toISOString();
+                touchNovel(novelToUpdate.id);
+                saveNovels(novels);
+                isEditorDirty = false; // Reset for the chapter just saved
+                updateSaveStatus("Previous chapter saved", "success", 1000);
+                lastSuccessfulSaveTimestamp = new Date(chapterObjectToUpdate.updatedAt);
+                updateLastSavedDisplay();
+            } else {
+                console.error("BugFix: Failed to find chapter object to save:", chapterToSaveIdBeforeSwitch);
+                // Potentially show error to user or handle more gracefully
+            }
+        } else {
+            console.error("BugFix: Failed to find novel object for saving chapter:", currentNovelId);
+        }
+    }
+
+
     const nextOrder = novel.chapters.length + 1;
     const title = await showPrompt({
         title: `New Chapter Title`,
         placeholder: `Chapter ${nextOrder}`
     });
-    if (title === null) return;
+    if (title === null) return; // User cancelled prompt
     triggerHapticFeedback([40]);
+
     const now = new Date().toISOString();
     const newChapter = {
         id: crypto.randomUUID(),
-        title: title.trim() || `Chapter ${nextOrder}`,
+        title: title.trim() || `Chapter ${nextOrder}`, // Default title if prompt is empty
         order: nextOrder,
-        contentHTML: '<p></p>',
+        contentHTML: '<p></p>', // Start with empty paragraph
         createdAt: now,
         updatedAt: now,
     };
     novel.chapters.push(newChapter);
-    touchNovel(novel.id);
+    touchNovel(novel.id); // Update novel's timestamp
     saveNovels(novels);
     updateSaveStatus("Chapter created", "success", 1500);
 
-    const previousCurrentChapterId = currentChapterId;
-    currentChapterId = newChapter.id;
+    currentChapterId = newChapter.id; // Switch to new chapter
     updateURL(novel.id, currentChapterId);
 
-    renderChapterList(novel); // Re-render list to show new chapter
-
-    if (previousCurrentChapterId !== newChapter.id && previousCurrentChapterId !== null) {
-        await saveCurrentChapterData();
-    }
-    await loadChapterIntoEditor(newChapter);
+    renderChapterList(novel); // Re-render list to show new chapter & update active state
+    await loadChapterIntoEditor(newChapter); // Load new chapter into editor
+    
     closeChapterDrawerOnMobile(); // Close drawer if open on mobile after adding
     
     const chapterListEl = document.getElementById(CHAPTER_LIST_ID);
@@ -1460,7 +1483,7 @@ async function loadChapterIntoEditor(chapter) {
     }
 
   } catch (error) {
-    console.error('CKEditor initialization error:', error);
+    console.error('CKEditor initialization error:', error, error.stack);
     const currentEditorContainer = document.getElementById(EDITOR_CONTAINER_ID);
     if (currentEditorContainer) currentEditorContainer.innerHTML = '<p class="text-color-error p-4">Error loading editor. Please try refreshing.</p>';
     if (activeChapterTitleDisplayEl) activeChapterTitleDisplayEl.textContent = 'Error Loading Chapter';
@@ -1490,7 +1513,7 @@ async function destroyEditorInstance() {
         try {
             await editorInstance.destroy();
         } catch (error) {
-            console.error("Error destroying editor instance:", error);
+            console.error("Error destroying editor instance:", error, error.stack);
         }
         editorInstance = null;
     }
@@ -1976,7 +1999,7 @@ async function openExportModal() {
                 currentCoverDataURL = await fileToDataURL(file); 
                 updateCoverPreview(currentCoverDataURL);
             } catch (err) {
-                console.error("Cover processing error:", err);
+                console.error("Cover processing error:", err, err.stack);
                 currentCoverDataURL = novel.coverDataURL; 
                 updateCoverPreview(currentCoverDataURL);
                 await showConfirm({title: "Image Error", message: "Could not process the selected image. Please try a different PNG, JPG, or GIF file.", okText:"OK"});
@@ -2064,6 +2087,10 @@ async function openExportModal() {
 
 
     downloadEPUBBtn.addEventListener('click', async () => {
+        if (typeof JSZip === 'undefined') {
+            await showConfirm({title: "Export Error", message: "EPUB generation library (JSZip) is not available. Please check your internet connection or try refreshing.", okText: "OK"});
+            return;
+        }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
@@ -2080,11 +2107,7 @@ async function openExportModal() {
         const finalCoverDataURL = novel.coverDataURL;
 
         try {
-            if (typeof JSZip === 'undefined') {
-                throw new Error("JSZip library is not loaded.");
-            }
             const zip = new JSZip();
-
             zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
 
             const oebpsFolder = zip.folder("OEBPS");
@@ -2135,12 +2158,16 @@ async function openExportModal() {
             triggerHapticFeedback([40]);
 
         } catch (error) {
-            console.error("EPUB Generation Error:", error);
+            console.error("EPUB Generation Error:", error, error.stack);
             await showConfirm({title: "EPUB Export Failed", message: `Could not generate EPUB. ${error.message}. Please check console for details.`, okText:"OK"});
         }
     });
 
     downloadZIPBtn.addEventListener('click', async () => {
+        if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') { 
+            await showConfirm({title: "Export Error", message: "Required library (JSZip or Turndown) is not available for Markdown export. Please check your internet connection or try refreshing.", okText: "OK"});
+            return;
+        }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
@@ -2154,9 +2181,6 @@ async function openExportModal() {
         const exportLanguage = novel.language || 'en';
 
         try {
-            if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') { 
-                throw new Error("Required library (JSZip or TurndownService) is not loaded.");
-            }
             const zip = new JSZip();
             const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' }); 
 
@@ -2182,12 +2206,16 @@ async function openExportModal() {
             updateSaveStatus("ZIP (MD) exported successfully!", "success");
             triggerHapticFeedback([40]);
         } catch (error) {
-             console.error("Markdown ZIP Generation Error:", error);
+             console.error("Markdown ZIP Generation Error:", error, error.stack);
             await showConfirm({title: "ZIP Export Failed", message: `Could not generate Markdown ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });
 
     downloadTXTZipBtn.addEventListener('click', async () => {
+        if (typeof JSZip === 'undefined') {
+            await showConfirm({title: "Export Error", message: "ZIP library (JSZip) is not available for Text export. Please check your internet connection or try refreshing.", okText: "OK"});
+            return;
+        }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
@@ -2201,9 +2229,6 @@ async function openExportModal() {
         const exportLanguage = novel.language || 'en';
 
         try {
-            if (typeof JSZip === 'undefined') {
-                throw new Error("JSZip library is not loaded.");
-            }
             const zip = new JSZip();
             
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
@@ -2229,7 +2254,7 @@ async function openExportModal() {
             triggerHapticFeedback([40]);
 
         } catch (error) {
-            console.error("TXT ZIP Generation Error:", error);
+            console.error("TXT ZIP Generation Error:", error, error.stack);
             await showConfirm({title: "TXT ZIP Export Failed", message: `Could not generate TXT ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });

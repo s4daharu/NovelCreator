@@ -1,6 +1,6 @@
 {
   "name": "Novel Creator V1.4",
-  "description": "A web app to write novels with chapter management, rich-text editing, and export options (EPUB, ZIP). Mobile-first and dark-mode only.",
+  "description": "A web app to write novels with chapter management, rich-text editing, and export options (EPUB, ZIP). Mobile-first ",
   "requestFramePermissions": [],
   "prompt": ""
 }
