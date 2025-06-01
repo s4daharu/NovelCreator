@@ -61,6 +61,7 @@
   <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
   
 
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="bg-color-bg text-color-onSurface font-sans h-screen overflow-hidden flex flex-col">
 
@@ -146,7 +147,7 @@
 
     <!-- Floating Action Button for New Chapter -->
     <button id="addChapterFab" title="New Chapter" aria-label="Add new chapter" class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 bg-color-accent text-white w-14 h-14 rounded-full shadow-xl hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-color-bg focus:ring-color-accent z-50 hidden flex items-center justify-center transition-transform transform hover:scale-105 active:scale-95">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="w-6 h-6">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-6-6h12" />
       </svg>
     </button>
@@ -155,6 +156,6 @@
 
   <!-- Main application script -->
   <script type="module" src="src/main.js"></script>
-
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
