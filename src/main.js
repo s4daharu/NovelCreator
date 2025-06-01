@@ -1,5 +1,4 @@
 
-
 import { 
     loadNovels, saveNovels, sanitizeFilename, fileToDataURL, 
     showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime, 
@@ -1656,12 +1655,12 @@ function generateCoverXHTML(coverFilename, language) {
 }
 
 
-function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, chapters, coverMeta) {
-    const chapterItemsManifest = chapters.map(ch =>
+function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, chaptersToExport, coverMeta) {
+    const chapterItemsManifest = chaptersToExport.map(ch =>
         `<item id="chapter-${ch.id}" href="${sanitizeFilename(`chapter-${ch.order}_${ch.title || 'chapter-' + ch.order}`)}.xhtml" media-type="application/xhtml+xml"/>`
     ).join('\n        ');
 
-    const chapterItemsSpine = chapters.map(ch =>
+    const chapterItemsSpine = chaptersToExport.map(ch =>
         `<itemref idref="chapter-${ch.id}"/>`
     ).join('\n        ');
 
@@ -1706,8 +1705,8 @@ function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, ch
 </package>`;
 }
 
-function generateTocNCX(novel, exportTitle, chapters) {
-    const navPoints = chapters.map((ch, index) => `
+function generateTocNCX(novel, exportTitle, chaptersToExport) {
+    const navPoints = chaptersToExport.map((ch, index) => `
     <navPoint id="navpoint-${ch.order}" playOrder="${index + 1}"> <!-- playOrder should be sequential 1-based -->
       <navLabel><text>${ch.title || `Chapter ${ch.order}`}</text></navLabel>
       <content src="${sanitizeFilename(`chapter-${ch.order}_${ch.title || 'chapter-' + ch.order}`)}.xhtml"/>
@@ -1793,6 +1792,25 @@ async function openExportModal() {
         `<option value="${opt.value}" ${ (initialLanguageIsOther && opt.value === 'other') || (!initialLanguageIsOther && novel.language === opt.value) ? 'selected' : ''}>${opt.text}</option>`
     ).join('');
 
+    const sortedChaptersForSelection = novel.chapters.slice().sort((a, b) => a.order - b.order);
+    const chapterSelectionHTML = `
+        <div class="mb-4">
+            <label class="block text-sm font-medium text-color-onSurface mb-1">Chapters to Export</label>
+            <div class="flex items-center mb-2">
+                <input type="checkbox" id="exportSelectAllChapters" class="h-4 w-4 text-color-accent bg-gray-700 border-gray-600 rounded focus:ring-color-accent focus:ring-2 cursor-pointer" checked>
+                <label for="exportSelectAllChapters" class="ml-2 text-sm text-color-onSurface select-none cursor-pointer">Select All Chapters</label>
+            </div>
+            <ul id="exportChapterList" class="max-h-48 overflow-y-auto border border-color-border rounded-md p-2 space-y-1 bg-color-input-bg/50">
+                ${sortedChaptersForSelection.map(ch => `
+                    <li class="flex items-center">
+                        <input type="checkbox" id="export-ch-${ch.id}" data-chapter-id="${ch.id}" class="export-chapter-checkbox h-4 w-4 text-color-accent bg-gray-700 border-gray-600 rounded focus:ring-color-accent focus:ring-1 cursor-pointer" checked>
+                        <label for="export-ch-${ch.id}" class="ml-2 text-sm text-color-onSurface select-none cursor-pointer truncate" title="${ch.title || `Chapter ${ch.order}`}">${ch.order}. ${ch.title || `Chapter ${ch.order}`}</label>
+                    </li>
+                `).join('')}
+            </ul>
+        </div>
+    `;
+
 
     overlay.innerHTML = `
         <div class="modal" style="max-width: 500px;">
@@ -1815,6 +1833,8 @@ async function openExportModal() {
                 </select>
                 <input type="text" id="exportLanguageOtherInput" placeholder="e.g., fr-CA, pt-PT" value="${initialLanguageIsOther ? initialOtherLanguageValue : ''}" class="w-full p-2 bg-color-input-bg border border-color-border rounded text-color-onSurface mt-2 ${initialLanguageIsOther ? '' : 'hidden'}">
             </div>
+
+            ${chapterSelectionHTML}
 
             <div class="mb-4">
                 <label for="coverInput" class="block text-sm font-medium text-color-onSurface mb-1">Cover Image (PNG, JPG, GIF, max 2MB)</label>
@@ -1855,6 +1875,43 @@ async function openExportModal() {
     const coverFileNameDisplayEl = overlay.querySelector('#coverFileNameDisplay');
     const removeCoverBtnEl = overlay.querySelector('#removeCoverBtn');
     const saveDetailsBtn = overlay.querySelector('#saveNovelDetailsBtn');
+    const selectAllChaptersCheckbox = overlay.querySelector('#exportSelectAllChapters');
+    const chapterCheckboxes = overlay.querySelectorAll('.export-chapter-checkbox');
+    const downloadEPUBBtn = overlay.querySelector('#downloadEPUBBtn');
+    const downloadZIPBtn = overlay.querySelector('#downloadZIPBtn');
+    const downloadTXTZipBtn = overlay.querySelector('#downloadTXTZipBtn');
+
+    const updateExportButtonState = () => {
+        const anyChapterSelected = Array.from(chapterCheckboxes).some(cb => cb.checked);
+        downloadEPUBBtn.disabled = !anyChapterSelected;
+        downloadZIPBtn.disabled = !anyChapterSelected;
+        downloadTXTZipBtn.disabled = !anyChapterSelected;
+    };
+    
+    selectAllChaptersCheckbox.addEventListener('change', () => {
+        chapterCheckboxes.forEach(cb => cb.checked = selectAllChaptersCheckbox.checked);
+        updateExportButtonState();
+    });
+
+    chapterCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            const allChecked = Array.from(chapterCheckboxes).every(c => c.checked);
+            const someChecked = Array.from(chapterCheckboxes).some(c => c.checked);
+            if (allChecked) {
+                selectAllChaptersCheckbox.checked = true;
+                selectAllChaptersCheckbox.indeterminate = false;
+            } else if (someChecked) {
+                selectAllChaptersCheckbox.checked = false;
+                selectAllChaptersCheckbox.indeterminate = true;
+            } else {
+                selectAllChaptersCheckbox.checked = false;
+                selectAllChaptersCheckbox.indeterminate = false;
+            }
+            updateExportButtonState();
+        });
+    });
+    updateExportButtonState(); // Initial state
+
 
     let currentCoverDataURL = novel.coverDataURL; 
 
@@ -1929,8 +1986,6 @@ async function openExportModal() {
             }
         } else { 
             // Revert to novel's current cover if user cancels file dialog or no file selected
-            // This case might not be strictly necessary if currentCoverDataURL is already novel.coverDataURL
-            // but ensures consistency if the flow allowed currentCoverDataURL to be temporarily null.
             currentCoverDataURL = novel.coverDataURL;
             updateCoverPreview(currentCoverDataURL);
         }
@@ -1999,8 +2054,20 @@ async function openExportModal() {
         }
     });
 
+    const getSelectedChapters = () => {
+        const selectedIds = Array.from(chapterCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.chapterId);
+        return novel.chapters.filter(ch => selectedIds.includes(ch.id)).sort((a, b) => a.order - b.order);
+    };
 
-    overlay.querySelector('#downloadEPUBBtn').addEventListener('click', async () => {
+
+    downloadEPUBBtn.addEventListener('click', async () => {
+        const chaptersToExport = getSelectedChapters();
+        if (chaptersToExport.length === 0) {
+            await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            return;
+        }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) return; // Stop if metadata update failed validation
 
@@ -2047,15 +2114,13 @@ async function openExportModal() {
                 await showConfirm({title: "Cover Warning", message: "Unsupported cover image format. Only PNG, JPG, GIF are reliably supported for EPUB covers. EPUB will be generated without cover.", okText: "OK"});
             }
 
-
-            const sortedChapters = novel.chapters.slice().sort((a, b) => a.order - b.order);
-            sortedChapters.forEach(ch => {
+            chaptersToExport.forEach(ch => {
                 const chapterFilename = sanitizeFilename(`chapter-${ch.order}_${ch.title || 'chapter-' + ch.order}`) + ".xhtml";
                 oebpsFolder.file(chapterFilename, generateChapterXHTML(ch, exportLanguage));
             });
 
-            oebpsFolder.file("content.opf", generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, sortedChapters, coverMetaInfo));
-            oebpsFolder.file("toc.ncx", generateTocNCX(novel, exportTitle, sortedChapters));
+            oebpsFolder.file("content.opf", generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, chaptersToExport, coverMetaInfo));
+            oebpsFolder.file("toc.ncx", generateTocNCX(novel, exportTitle, chaptersToExport));
 
             const epubBlob = await zip.generateAsync({ type: 'blob', mimeType: "application/epub+zip" });
             const link = document.createElement('a');
@@ -2074,7 +2139,12 @@ async function openExportModal() {
         }
     });
 
-    overlay.querySelector('#downloadZIPBtn').addEventListener('click', async () => {
+    downloadZIPBtn.addEventListener('click', async () => {
+        const chaptersToExport = getSelectedChapters();
+        if (chaptersToExport.length === 0) {
+            await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            return;
+        }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) return;
 
@@ -2091,11 +2161,11 @@ async function openExportModal() {
 
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
             const updatedDate = novel.updatedAt ? new Date(novel.updatedAt).toLocaleDateString() : 'N/A';
-            const metadataContent = `# ${exportTitle}\n\n**Author:** ${exportAuthor}\n**Language:** ${exportLanguage}\n**Created:** ${createdDate}\n**Last Updated:** ${updatedDate}\n**Total Chapters:** ${novel.chapters.length}\n---\n`;
+            const metadataContent = `# ${exportTitle}\n\n**Author:** ${exportAuthor}\n**Language:** ${exportLanguage}\n**Created:** ${createdDate}\n**Last Updated:** ${updatedDate}\n**Exported Chapters:** ${chaptersToExport.length} (out of ${novel.chapters.length} total)\n---\n`;
             zip.file('novel_metadata.md', metadataContent.trim());
 
 
-            novel.chapters.sort((a,b) => a.order - b.order).forEach((ch) => {
+            chaptersToExport.forEach((ch) => {
                 const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`; // Padded order
                 const md = turndownService.turndown(ch.contentHTML || ''); 
                 zip.file(`${base}.md`, md);
@@ -2116,7 +2186,12 @@ async function openExportModal() {
         }
     });
 
-    overlay.querySelector('#downloadTXTZipBtn').addEventListener('click', async () => {
+    downloadTXTZipBtn.addEventListener('click', async () => {
+        const chaptersToExport = getSelectedChapters();
+        if (chaptersToExport.length === 0) {
+            await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            return;
+        }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) return;
 
@@ -2132,10 +2207,10 @@ async function openExportModal() {
             
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
             const updatedDate = novel.updatedAt ? new Date(novel.updatedAt).toLocaleDateString() : 'N/A';
-            const metadataContent = `Title: ${exportTitle}\nAuthor: ${exportAuthor}\nLanguage: ${exportLanguage}\nCreated: ${createdDate}\nLast Updated: ${updatedDate}\nTotal Chapters: ${novel.chapters.length}\n---\n`;
+            const metadataContent = `Title: ${exportTitle}\nAuthor: ${exportAuthor}\nLanguage: ${exportLanguage}\nCreated: ${createdDate}\nLast Updated: ${updatedDate}\nExported Chapters: ${chaptersToExport.length} (out of ${novel.chapters.length} total)\n---\n`;
             zip.file('novel_metadata.txt', metadataContent);
 
-            novel.chapters.sort((a,b) => a.order - b.order).forEach((ch) => {
+            chaptersToExport.forEach((ch) => {
                 const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`;
                 const txt = htmlToPlainText(ch.contentHTML || ''); 
                 zip.file(`${base}.txt`, `Chapter ${ch.order}: ${ch.title || 'Untitled Chapter'}\n\n${txt}`); // Add title to TXT content
@@ -2204,6 +2279,140 @@ async function openExportModal() {
     closeBtn?.addEventListener('click', handleClose);
     overlay.addEventListener('click', ev => { if (ev.target === overlay) handleClose(); }); 
     overlay.addEventListener('keydown', handleKeyDown); 
+}
+
+// -------------------- SINGLE CHAPTER EXPORT --------------------
+function showSingleChapterExportOptions(chapter) {
+  return new Promise(resolve => {
+    const triggeringElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-labelledby', 'singleChapterExportTitle');
+
+    overlay.innerHTML = `
+      <div class="modal" style="max-width: 320px;">
+        <h2 id="singleChapterExportTitle">Export "${chapter.title || 'Untitled Chapter'}"</h2>
+        <p class="modal-message">Select a format:</p>
+        <div class="actions flex-col gap-y-2">
+          <button id="exportChapterMD" class="btn btn-primary w-full">Markdown (.md)</button>
+          <button id="exportChapterTXT" class="btn btn-primary w-full">Plain Text (.txt)</button>
+          <button id="exportChapterCancel" class="btn btn-secondary w-full mt-2">Cancel</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.classList.add('body-modal-open');
+    requestAnimationFrame(() => {
+        overlay.classList.add('active');
+    });
+
+    const modalElement = overlay.querySelector('.modal');
+    const mdBtn = overlay.querySelector('#exportChapterMD');
+    const txtBtn = overlay.querySelector('#exportChapterTXT');
+    const cancelBtn = overlay.querySelector('#exportChapterCancel');
+    
+    const focusableElements = Array.from(modalElement.querySelectorAll('button')).filter(el => el.offsetParent !== null);
+    const firstFocusableElement = focusableElements[0] || mdBtn;
+    const lastFocusableElement = focusableElements[focusableElements.length - 1] || cancelBtn;
+    
+    firstFocusableElement?.focus(); 
+
+    const handleFormatSelection = (format) => {
+      triggerHapticFeedback([20]);
+      cleanup();
+      resolve(format);
+    };
+
+    const handleKeyDown = (ev) => {
+        if (ev.key === 'Escape') {
+            handleFormatSelection(null); // Cancel
+        } else if (ev.key === 'Tab') {
+             if (!focusableElements.length) { ev.preventDefault(); return; }
+            if (ev.shiftKey) {
+                if (document.activeElement === firstFocusableElement) {
+                    ev.preventDefault();
+                    lastFocusableElement?.focus();
+                }
+            } else {
+                if (document.activeElement === lastFocusableElement) {
+                    ev.preventDefault();
+                    firstFocusableElement?.focus();
+                }
+            }
+        }
+    };
+
+    mdBtn?.addEventListener('click', () => handleFormatSelection('md'));
+    txtBtn?.addEventListener('click', () => handleFormatSelection('txt'));
+    cancelBtn?.addEventListener('click', () => handleFormatSelection(null));
+    overlay.addEventListener('click', ev => {
+      if (ev.target === overlay) {
+        handleFormatSelection(null);
+      }
+    });
+    overlay.addEventListener('keydown', handleKeyDown);
+
+    function cleanup() {
+      overlay.classList.remove('active');
+      document.body.classList.remove('body-modal-open');
+      mdBtn?.removeEventListener('click', () => handleFormatSelection('md'));
+      txtBtn?.removeEventListener('click', () => handleFormatSelection('txt'));
+      cancelBtn?.removeEventListener('click', () => handleFormatSelection(null));
+      overlay.removeEventListener('click', () => handleFormatSelection(null));
+      overlay.removeEventListener('keydown', handleKeyDown);
+
+      setTimeout(() => {
+         if (document.body.contains(overlay)) {
+            document.body.removeChild(overlay);
+          }
+         if (triggeringElement && typeof triggeringElement.focus === 'function') {
+            triggeringElement.focus();
+          }
+      }, 200); 
+    }
+  });
+}
+
+async function handleSingleChapterExport(chapter) {
+    const format = await showSingleChapterExportOptions(chapter);
+    if (!format) return; // User cancelled
+
+    const filenameBase = `${String(chapter.order).padStart(3, '0')}_${sanitizeFilename(chapter.title || `chapter-${chapter.order}`)}`;
+    let contentToDownload = '';
+    let mimeType = '';
+    let fullFilename = '';
+
+    if (format === 'md') {
+        if (typeof TurndownService === 'undefined') {
+            await showConfirm({ title: "Error", message: "Markdown conversion library (Turndown) is not available.", okText: "OK" });
+            return;
+        }
+        const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
+        contentToDownload = turndownService.turndown(chapter.contentHTML || '');
+        mimeType = 'text/markdown;charset=utf-8';
+        fullFilename = `${filenameBase}.md`;
+    } else if (format === 'txt') {
+        contentToDownload = htmlToPlainText(chapter.contentHTML || '');
+        mimeType = 'text/plain;charset=utf-8';
+        fullFilename = `${filenameBase}.txt`;
+    } else {
+        console.warn("Unknown format for single chapter export:", format);
+        return;
+    }
+
+    const blob = new Blob([contentToDownload], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fullFilename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    updateSaveStatus(`Chapter exported as ${format.toUpperCase()}`, 'success');
+    triggerHapticFeedback([40]);
 }
 
 
@@ -2320,6 +2529,9 @@ async function showChapterContextMenu(chapter, x, y) {
     <div class="menu-item" data-action="rename" role="menuitem" tabindex="0">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2 inline-block align-text-bottom" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg>Rename
     </div>
+     <div class="menu-item" data-action="exportSingle" role="menuitem" tabindex="0">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2 inline-block align-text-bottom" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>Export Chapter...
+    </div>
     <div class="menu-item ${isFirstChapter ? 'menu-item-disabled' : ''}" data-action="moveUp" role="menuitem" tabindex="${isFirstChapter ? -1 : 0}" aria-disabled="${isFirstChapter}">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 mr-2 inline-block align-text-bottom" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" /></svg>Move Up
     </div>
@@ -2363,6 +2575,9 @@ async function showChapterContextMenu(chapter, x, y) {
             document.getElementById(ACTIVE_CHAPTER_TITLE_DISPLAY_ID).textContent = chapter.title; 
           }
         }
+        break;
+      case 'exportSingle':
+        await handleSingleChapterExport(chapter);
         break;
       case 'delete':
         const confirmed = await showConfirm({ title: 'Delete Chapter', message: `Are you sure you want to delete chapter “${chapter.title || 'Untitled Chapter'}”?`, okText: 'Delete' });

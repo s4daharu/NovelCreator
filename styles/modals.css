@@ -1,3 +1,4 @@
+
 /* Base styles for custom prompt & confirm modals */
 .modal-overlay {
   position: fixed;
@@ -102,6 +103,15 @@ html.dark .modal {
   margin-top: 1.5rem; /* Increased margin for better separation */
 }
 
+/* Allow actions to stack vertically for specific modals if class is added */
+.modal .actions.flex-col {
+  flex-direction: column;
+}
+.modal .actions.flex-col .btn {
+  width: 100%;
+}
+
+
 .modal .btn {
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
@@ -127,6 +137,12 @@ html.dark .modal {
   opacity: 0.85; /* General opacity hover */
   background-color: var(--accent-variant); /* Darker accent on hover for more feedback */
 }
+.modal .btn-primary:disabled {
+  background-color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 
 .modal .btn-secondary {
   background-color: transparent;
@@ -204,6 +220,40 @@ html.dark .modal {
 #removeCoverBtn:hover {
   opacity:0.8; /* Lighter error color on hover */
 }
+
+
+/* Styles for Export Modal Chapter Selection List */
+#exportChapterList {
+  background-color: var(--input-bg); /* Slightly different from main modal surface */
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem;
+  max-height: 10rem; /* approx 5-6 items visible, then scroll */
+  overflow-y: auto;
+  list-style: none;
+}
+#exportChapterList li {
+  padding: 0.25rem 0.35rem;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+#exportChapterList li:hover {
+  background-color: rgba(var(--accent-rgb), 0.1);
+}
+#exportChapterList input[type="checkbox"] {
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+#exportChapterList label {
+  font-weight: normal;
+  margin-bottom: 0; /* Override default label margin */
+  color: var(--onSurface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
 /* Specific adjustments for smaller screens */
 @media (max-width: 480px) {
