@@ -16,9 +16,10 @@
   flex-shrink: 0; /* Prevent toolbar from shrinking */
   overflow-x: auto; /* Allow horizontal scrolling of the toolbar */
   padding-bottom: 2px; /* Prevent scrollbar from overlapping items */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 .ck.ck-toolbar.ck-toolbar_grouping > .ck-toolbar__items {
-  flex-wrap: nowrap; /* Allow toolbar items to wrap on smaller screens */
+  flex-wrap: nowrap; /* Ensure items stay in a single line for horizontal scroll */
 }
 
 .ck.ck-editor--classic .ck-editor__main {
@@ -41,7 +42,7 @@
   border-bottom-right-radius: 0 !important;
   overflow-y: auto; /* Enable scrolling within the editable area */
   caret-color: var(--accent);
-  min-height: 100px; /* Minimum height to ensure it's usable even if content is short */
+  min-height: 200px; /* Minimum height to ensure it's usable even if content is short */
 }
 
 .ck.ck-editor__editable_inline.ck-placeholder::before,
@@ -83,24 +84,30 @@ html.dark .ck.ck-balloon-panel {
   background-color: transparent !important;
 }
 
-.ck.ck-dropdown__panel { /* For dropdown menus like Headings */
+/* CKEditor Dropdown Panel (e.g., Headings) Theming */
+.ck.ck-dropdown__panel {
   background-color: var(--surface) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; /* Universal shadow */
+  box-shadow: 0 2px 8px rgba(var(--onSurface-rgb), 0.15) !important;
 }
 html.dark .ck.ck-dropdown__panel {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+    box-shadow: 0 2px 8px rgba(var(--onSurface-rgb), 0.25) !important;
 }
 
-.ck.ck-dropdown__panel .ck-list__item .ck-button {
-  background-color: transparent !important; /* Ensure button background is transparent */
-  color: var(--onSurface) !important; /* Ensure text color is from theme */
+.ck.ck-dropdown__panel .ck-list .ck-list__item .ck-button {
+  color: var(--onSurface) !important;
+  background-color: transparent !important; /* Ensure transparent background initially */
 }
-.ck.ck-dropdown__panel .ck-list__item .ck-button:hover { /* Hover state for items within dropdown lists */
+.ck.ck-dropdown__panel .ck-list .ck-list__item .ck-button:hover,
+.ck.ck-dropdown__panel .ck-list .ck-list__item .ck-button.ck-on { /* Hover and active states for items in dropdown */
   background-color: rgba(var(--accent-rgb), 0.15) !important;
   color: var(--accent) !important;
 }
+.ck.ck-dropdown__panel .ck-list .ck-list__item .ck-button.ck-on {
+  background-color: rgba(var(--accent-rgb), 0.25) !important; /* Stronger for 'on' state */
+}
+
 
 .ck.ck-icon, .ck.ck-icon * {
   /* color: var(--onSurface) !important; Let button state handle icon color often */

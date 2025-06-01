@@ -1290,7 +1290,7 @@ function openChapterDrawer() {
     } else { // Fallback to search if nothing else focusable or visible
         const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID);
         if (chapterSearchInput && chapterSearchInput.offsetParent !== null) {
-            chapterSearchInput.focus();
+            // chapterSearchInput.focus(); // Do not focus search input on open
         }
     }
   }, 100); 
@@ -2102,21 +2102,22 @@ async function openExportModal() {
 
 
     downloadEPUBBtn.addEventListener('click', async () => {
+        console.log('Download EPUB button clicked');
         updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "EPUB generation library (JSZip) is not available. Please check your internet connection or try refreshing.", okText: "OK"});
-            updateSaveStatus("Export failed. Library missing.", "error");
+            updateSaveStatus("Export failed: JSZip library missing.", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
-            updateSaveStatus("Export failed. No chapters selected.", "error");
+            updateSaveStatus("Export failed: No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) {
-            updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+            updateSaveStatus("Export cancelled: Invalid metadata.", "warning");
             return; // Stop if metadata update failed validation
         }
 
@@ -2180,27 +2181,28 @@ async function openExportModal() {
 
         } catch (error) {
             console.error("EPUB Generation Error:", error, error.stack);
-            updateSaveStatus("Export failed. Check console.", "error");
+            updateSaveStatus("EPUB Export failed. Check console.", "error");
             await showConfirm({title: "EPUB Export Failed", message: `Could not generate EPUB. ${error.message}. Please check console for details.`, okText:"OK"});
         }
     });
 
     downloadZIPBtn.addEventListener('click', async () => {
+        console.log('Download ZIP (Markdown) button clicked');
         updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') { 
             await showConfirm({title: "Export Error", message: "Required library (JSZip or Turndown) is not available for Markdown export. Please check your internet connection or try refreshing.", okText: "OK"});
-            updateSaveStatus("Export failed. Library missing.", "error");
+            updateSaveStatus("Export failed: Library missing (JSZip/Turndown).", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
-            updateSaveStatus("Export failed. No chapters selected.", "error");
+            updateSaveStatus("Export failed: No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) {
-             updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+             updateSaveStatus("Export cancelled: Invalid metadata.", "warning");
             return;
         }
 
@@ -2235,27 +2237,28 @@ async function openExportModal() {
             triggerHapticFeedback([40]);
         } catch (error) {
              console.error("Markdown ZIP Generation Error:", error, error.stack);
-             updateSaveStatus("Export failed. Check console.", "error");
+             updateSaveStatus("Markdown ZIP Export failed. Check console.", "error");
             await showConfirm({title: "ZIP Export Failed", message: `Could not generate Markdown ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });
 
     downloadTXTZipBtn.addEventListener('click', async () => {
+        console.log('Download ZIP (Text) button clicked');
         updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "ZIP library (JSZip) is not available for Text export. Please check your internet connection or try refreshing.", okText: "OK"});
-            updateSaveStatus("Export failed. Library missing.", "error");
+            updateSaveStatus("Export failed: JSZip library missing.", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
-            updateSaveStatus("Export failed. No chapters selected.", "error");
+            updateSaveStatus("Export failed: No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
         if (updateSucceeded === false) {
-            updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+            updateSaveStatus("Export cancelled: Invalid metadata.", "warning");
             return;
         }
 
@@ -2290,7 +2293,7 @@ async function openExportModal() {
 
         } catch (error) {
             console.error("TXT ZIP Generation Error:", error, error.stack);
-            updateSaveStatus("Export failed. Check console.", "error");
+            updateSaveStatus("TXT ZIP Export failed. Check console.", "error");
             await showConfirm({title: "TXT ZIP Export Failed", message: `Could not generate TXT ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });
