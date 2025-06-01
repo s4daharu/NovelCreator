@@ -1,7 +1,10 @@
 /* CKEditor container styling - theme aware */
 
 .ck.ck-editor.ck-editor--classic {
-  border-radius: 0;
+  border-radius: 0; /* Remove default CKEditor border radius if not desired */
+  display: flex; /* Allow main and top to flex correctly */
+  flex-direction: column;
+  min-height: 0; /* Important for flex children in a fixed height container */
 }
 
 .ck.ck-editor__top .ck-toolbar {
@@ -10,44 +13,48 @@
   border-top-left-radius: 0 !important;
   border-top-right-radius: 0 !important;
   box-shadow: none !important;
+  flex-shrink: 0; /* Prevent toolbar from shrinking */
 }
 .ck.ck-toolbar.ck-toolbar_grouping > .ck-toolbar__items {
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Allow toolbar items to wrap on smaller screens */
 }
 
 .ck.ck-editor--classic .ck-editor__main {
-  flex-grow: 1;
-  min-height: 0;
-  position: relative;
+  flex-grow: 1; /* Allow main content area to fill available space */
+  min-height: 0; /* Essential for scrollability within flex child */
+  position: relative; /* For internal positioning if needed */
+  display: flex; /* To make editable area also flex grow */
+  flex-direction: column;
 }
 
 .ck.ck-editor__editable_inline {
   background-color: var(--bg) !important; /* Use important if CKEditor is too specific */
   color: var(--onSurface) !important;
-  height: 100%;
+  flex-grow: 1; /* Make editable area grow */
   font-size: calc(1rem * var(--editor-font-scale));
   line-height: 1.7;
-  padding: 1rem 1.5rem;
-  border: none;
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  overflow-y: auto;
+  padding: 1rem 1.5rem; /* Standard padding */
+  border: none !important; /* Remove CKEditor default borders */
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  overflow-y: auto; /* Enable scrolling within the editable area */
   caret-color: var(--accent);
+  min-height: 100px; /* Minimum height to ensure it's usable even if content is short */
 }
 
 .ck.ck-editor__editable_inline.ck-placeholder::before,
-.ck-placeholder {
+.ck-placeholder { /* CKEditor's placeholder text style */
   color: var(--text-secondary) !important;
   opacity: 0.7;
 }
 
-.ck.ck-balloon-panel {
+.ck.ck-balloon-panel { /* For floating toolbars, e.g., link editing */
   background-color: var(--surface) !important;
   color: var(--onSurface) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* Universal shadow */
-  z-index: 100;
+  z-index: 100; /* Ensure visibility above editor content */
 }
 html.dark .ck.ck-balloon-panel {
   box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; /* Darker shadow for dark theme */
@@ -61,20 +68,20 @@ html.dark .ck.ck-balloon-panel {
 }
 
 .ck.ck-button:hover,
-.ck.ck-button.ck-on {
+.ck.ck-button.ck-on { /* For active/toggled buttons */
   background-color: rgba(var(--accent-rgb), 0.15) !important;
   color: var(--accent) !important;
   outline: none !important;
 }
 .ck.ck-button.ck-on {
-  background-color: rgba(var(--accent-rgb), 0.25) !important;
+  background-color: rgba(var(--accent-rgb), 0.25) !important; /* Slightly stronger for 'on' state */
 }
 
-.ck.ck-button.ck-disabled:hover {
+.ck.ck-button.ck-disabled:hover { /* Disabled buttons should not change on hover */
   background-color: transparent !important;
 }
 
-.ck.ck-dropdown__panel {
+.ck.ck-dropdown__panel { /* For dropdown menus like Headings */
   background-color: var(--surface) !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 6px !important;
@@ -85,52 +92,56 @@ html.dark .ck.ck-dropdown__panel {
 }
 
 
-.ck.ck-list__item .ck-button:hover {
+.ck.ck-list__item .ck-button:hover { /* Hover state for items within dropdown lists */
   background-color: rgba(var(--accent-rgb), 0.15) !important;
   color: var(--accent) !important;
 }
 
 .ck.ck-icon, .ck.ck-icon * {
-  color: var(--onSurface) !important; /* Default icon color from theme */
+  /* color: var(--onSurface) !important; Let button state handle icon color often */
+  transition: color 0.15s ease-out; /* Smooth transition for icon color changes */
 }
-/* For light theme, icons on hover/on might need to be darker if accent is light */
-html:not(.dark) .ck.ck-button:hover .ck-icon, 
-html:not(.dark) .ck.ck-button:hover .ck-icon *,
-html:not(.dark) .ck.ck-button.ck-on .ck-icon, 
-html:not(.dark) .ck.ck-button.ck-on .ck-icon * {
+
+/* Ensure icons correctly inherit color from button state */
+.ck.ck-button:hover .ck-icon, 
+.ck.ck-button:hover .ck-icon *,
+.ck.ck-button.ck-on .ck-icon, 
+.ck.ck-button.ck-on .ck-icon * {
   color: var(--accent) !important; 
 }
-html.dark .ck.ck-button:hover .ck-icon, 
-html.dark .ck.ck-button:hover .ck-icon *,
-html.dark .ck.ck-button.ck-on .ck-icon, 
-html.dark .ck.ck-button.ck-on .ck-icon * {
-  color: var(--accent) !important;
+.ck.ck-button:not(.ck-on):not(:hover) .ck-icon,
+.ck.ck-button:not(.ck-on):not(:hover) .ck-icon * {
+    color: var(--onSurface) !important; /* Default icon color when button is not active or hovered */
 }
 
 
-.ck.ck-form-header {
+.ck.ck-form-header { /* For forms within CKEditor, e.g., insert table */
     background-color: var(--surface) !important;
     color: var(--onSurface) !important;
 }
-.ck.ck-input {
+.ck.ck-input { /* General input fields within CKEditor */
     background-color: var(--input-bg) !important;
     color: var(--onSurface) !important;
     border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important; /* Consistent border radius */
 }
 .ck.ck-input:focus {
     border-color: var(--accent) !important;
-    box-shadow: 0 0 0 1px var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important; /* Focus ring */
 }
-.ck.ck-labeled-field-view__input_textarea {
+.ck.ck-labeled-field-view__input_textarea { /* Specific for textareas in labeled fields */
     background-color: var(--input-bg) !important;
     color: var(--onSurface) !important;
     border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
 }
 
+/* Find and Replace UI specific theming */
 .ck.ck-find-and-replace-form {
     background-color: var(--surface) !important;
     border: 1px solid var(--border-color) !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+    border-radius: 6px !important;
 }
 html.dark .ck.ck-find-and-replace-form {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
@@ -140,12 +151,18 @@ html.dark .ck.ck-find-and-replace-form {
     background-color: var(--input-bg) !important;
     color: var(--onSurface) !important;
     border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
 }
 .ck.ck-find-and-replace-form .ck-form__header {
     color: var(--onSurface) !important;
+    padding-bottom: 0.5em; /* Add some spacing for the header */
+}
+.ck.ck-find-and-replace-form .ck-button { /* Style buttons inside find/replace */
+    margin-top: 0.5em; /* Space out buttons */
 }
 
-.ck.ck-contextual-balloon {
+
+.ck.ck-contextual-balloon { /* Balloons for things like table properties */
     background-color: var(--surface) !important;
     color: var(--onSurface) !important;
     border: 1px solid var(--border-color) !important;
@@ -156,41 +173,45 @@ html.dark .ck.ck-contextual-balloon {
     box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
 }
 
+/* Text selection color within the editor */
 .ck-editor__editable ::selection {
   background-color: rgba(var(--accent-rgb), 0.3);
-  color: var(--onSurface); /* Ensure text is readable, might need adjustment based on accent */
+  color: var(--onSurface); /* Ensure text is readable; might need adjustment based on accent */
 }
-.ck-editor__editable.ck-focused ::selection {
+.ck-editor__editable.ck-focused ::selection { /* Slightly darker selection when editor is focused */
   background-color: rgba(var(--accent-rgb), 0.4);
 }
 
 /* Code block styling */
 .ck-content pre {
-  background-color: #282c34; /* Common dark bg, can be themed if desired */
-  color: #abb2bf;
+  background-color: #282c34; /* Common dark bg for code blocks */
+  color: #abb2bf; /* Light text for dark code blocks */
   padding: 1em;
   border-radius: 4px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  white-space: pre-wrap; /* Allow wrapping */
+  word-wrap: break-word; /* Break long words if necessary */
   border: 1px solid var(--border-color);
+  overflow-x: auto; /* Allow horizontal scrolling for long lines */
 }
-html:not(.dark) .ck-content pre { /* Example light theme for code blocks */
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
+html:not(.dark) .ck-content pre { /* Light theme for code blocks */
+  background-color: #f5f5f5; /* Light grey background */
+  color: #333; /* Dark text */
+  border: 1px solid #ddd; /* Lighter border */
 }
 
-.ck-content code { /* Inline code */
+.ck-content code { /* Inline code styling */
   background-color: rgba(var(--accent-rgb), 0.1);
   padding: .1em .3em;
   border-radius: 3px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
   color: var(--accent); /* Make inline code use accent color text */
+  font-size: 0.9em; /* Slightly smaller for inline code */
 }
-.ck-content pre code {
+.ck-content pre code { /* Reset inline code styles if inside a <pre> block */
   background-color: transparent;
   padding: 0;
   border-radius: 0;
   color: inherit; /* Inherit from <pre> for code within blocks */
+  font-size: inherit;
 }

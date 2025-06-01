@@ -4,7 +4,7 @@
   color: var(--onSurface);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px) { /* md breakpoint */
   #chapterDrawer.open {
     transform: translateX(0);
   }
@@ -15,10 +15,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.65rem 0.75rem;
+  padding: 0.65rem 0.75rem; /* Base padding for items */
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out, color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
   word-break: break-word;
   border-left: 3px solid transparent;
   color: var(--text-primary);
@@ -36,7 +36,8 @@
     color: var(--accent);
     font-weight: 600;
     border-left: 3px solid var(--accent);
-    padding-left: calc(0.75rem - 3px);
+    /* Adjust padding-left to account for border width so text aligns with non-active items */
+    padding-left: calc(0.75rem - 3px + 3px); /* Original padding-left (0.75rem) - border (3px) + new border (3px) = 0.75rem for text alignment */
 }
 #chapterList li.active-chapter:hover,
 #chapterList li.active-chapter:focus-visible {
@@ -46,13 +47,21 @@
 #chapterList li .chapter-title {
   flex-grow: 1;
   margin-right: 0.5rem;
-  cursor: grab;
+  cursor: grab; /* Indicate draggable area */
+  overflow: hidden; /* For better truncation with flex */
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+#chapterList li .chapter-title .drag-handle-icon { /* Icon specific styles if needed */
+  vertical-align: middle; /* Align icon better with text */
+}
+
 
 #chapterList li .drag-handle-icon {
   color: var(--text-secondary);
   opacity: 0.7;
   transition: color 0.2s, opacity 0.2s;
+  flex-shrink: 0; /* Prevent icon from shrinking */
 }
 #chapterList li:hover .drag-handle-icon,
 #chapterList li:focus-visible .drag-handle-icon {
@@ -63,19 +72,20 @@
   color: var(--accent);
   opacity: 0.85;
 }
-#chapterList li.sortable-chosen .drag-handle-icon {
+#chapterList li.sortable-chosen .drag-handle-icon { /* Ensure chosen item drag handle is clearly visible */
   color: var(--accent) !important;
   opacity: 1 !important;
 }
 
 #chapterList li .delete-chapter-btn {
   color: var(--error);
-  font-size: 1.1rem;
+  font-size: 1.1rem; /* Ensure icon size is consistent */
   padding: 0.25rem;
   border-radius: 50%;
-  line-height: 1;
+  line-height: 1; /* Prevent extra space */
   opacity: 0.7;
   transition: opacity 0.2s, background-color 0.2s;
+  flex-shrink: 0; /* Prevent button from shrinking */
 }
 #chapterList li .delete-chapter-btn:hover,
 #chapterList li:focus-visible .delete-chapter-btn {
@@ -84,22 +94,26 @@
 }
 
 /* Styling for SortableJS dragging */
-.sortable-ghost {
+.sortable-ghost { /* Placeholder style */
   opacity: 0.4;
   background-color: rgba(var(--accent-rgb), 0.25) !important;
   border: 1px dashed var(--accent);
   border-radius: 6px;
 }
-.sortable-chosen {
-  opacity: 0.5 !important;
-  background-color: var(--surface) !important;
+.sortable-chosen { /* Style of the item being dragged */
+  opacity: 0.5 !important; /* Make it slightly transparent */
+  background-color: var(--surface) !important; /* Or a distinct color */
 }
-.sortable-drag {
+.sortable-drag { /* Element being actually dragged by the mouse */
   opacity: 0.9 !important;
-  background-color: var(--surface) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; /* Shadow may need theme adjustment */
+  background-color: var(--surface) !important; /* Keep its original surface */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; /* Shadow needs theme adjustment */
   border-radius: 6px;
 }
+html.dark .sortable-drag {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+}
+
 
 @keyframes listReorderFlashAnimationLight {
   0%, 100% { background-color: var(--surface); }
@@ -117,7 +131,7 @@ html.dark #chapterList.list-reordered-flash {
   animation: listReorderFlashAnimationDark 0.7s ease-in-out;
 }
 
-#chapterList .no-chapters-message {
+#chapterList .no-chapters-message { /* Placeholder for when list is empty */
     padding: 1rem;
     text-align: center;
     color: var(--text-secondary);
@@ -130,13 +144,13 @@ html.dark #chapterList.list-reordered-flash {
   color: var(--onSurface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  z-index: 150;
+  z-index: 150; /* Ensure it's above other drawer content */
   padding: 0.25rem 0;
   min-width: 150px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* Universal shadow, adjust opacity if needed */
 }
 html.dark #chapterContextMenu {
-  background-color: #2f2f2f; /* Retain specific dark if needed, or make var(--surface-deep) */
+  background-color: #2f2f2f; /* Slightly darker surface for dark theme context menu */
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
@@ -153,6 +167,7 @@ html.dark #chapterContextMenu {
 }
 #chapterContextMenu .menu-item svg {
  color: var(--text-secondary); /* Default icon color */
+ transition: color 0.15s ease-out;
 }
 
 
@@ -167,7 +182,7 @@ html.dark #chapterContextMenu {
 }
 
 
-#chapterContextMenu .menu-item-delete {
+#chapterContextMenu .menu-item-delete { /* Specific styling for delete item */
     color: var(--error);
 }
 #chapterContextMenu .menu-item-delete svg {
@@ -176,11 +191,11 @@ html.dark #chapterContextMenu {
 #chapterContextMenu .menu-item-delete:not(.menu-item-disabled):hover,
 #chapterContextMenu .menu-item-delete:not(.menu-item-disabled):focus-visible {
     background-color: rgba(var(--error-rgb), 0.15);
-    color: var(--error);
+    color: var(--error); /* Ensure text color remains error color on hover */
 }
 #chapterContextMenu .menu-item-delete:not(.menu-item-disabled):hover svg,
 #chapterContextMenu .menu-item-delete:not(.menu-item-disabled):focus-visible svg {
-    color: var(--error);
+    color: var(--error); /* Ensure icon color remains error color on hover */
 }
 
 
@@ -190,15 +205,15 @@ html.dark #chapterContextMenu {
   cursor: not-allowed;
 }
 #chapterContextMenu .menu-item.menu-item-disabled svg {
-  color: var(--text-secondary);
+  color: var(--text-secondary); /* Icon color for disabled items */
   opacity: 0.6;
 }
-#chapterContextMenu .menu-item.menu-item-disabled:hover,
+#chapterContextMenu .menu-item.menu-item-disabled:hover, /* No hover effect for disabled items */
 #chapterContextMenu .menu-item.menu-item-disabled:focus-visible {
   background-color: transparent !important;
   color: var(--text-secondary) !important;
 }
 
 #editNovelTitleBtn {
-    /* Tailwind manages this mostly, ensure text-color-accent is applied */
+    /* Tailwind manages this mostly, ensure text-color-accent is applied. Already handled. */
 }

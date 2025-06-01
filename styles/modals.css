@@ -9,14 +9,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 200;
-  padding: 0.5rem; /* Added padding for small screens */
+  z-index: 200; /* High z-index to cover page content */
+  padding: 0.5rem; /* Padding for small screens to prevent modal touching edges */
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 html.dark .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.75); /* Darker for dark theme */
+  background-color: rgba(0, 0, 0, 0.75); /* Darker overlay for dark theme */
 }
 
 
@@ -34,22 +34,23 @@ html.dark .modal-overlay {
   background-color: var(--surface);
   color: var(--onSurface);
   border-radius: 8px;
-  max-width: 400px;
-  width: 100%;
+  max-width: 400px; /* Default max-width for modals */
+  width: 100%; /* Responsive width */
   padding: 1.5rem;
   box-shadow: 0 5px 15px rgba(0,0,0,0.2); /* Universal shadow */
-  transform: translateY(20px) scale(0.95);
-  opacity: 0;
+  transform: translateY(20px) scale(0.95); /* Initial state for animation */
+  opacity: 0; /* Initial state for animation */
   transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
   max-height: calc(100vh - 2rem); /* Ensure modal is not taller than viewport minus some padding */
-  overflow-y: auto; /* Allow vertical scrolling within the modal */
+  overflow-y: auto; /* Allow vertical scrolling within the modal if content exceeds max-height */
 }
 html.dark .modal {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* Stronger shadow for dark theme */
 }
 
 
 .modal h2 {
+  margin-top: 0; /* Remove default margin if any from global h2 */
   margin-bottom: 1rem;
   font-size: 1.35rem;
   color: var(--text-primary); /* Use text-primary from theme */
@@ -67,12 +68,14 @@ html.dark .modal {
   display: block;
   margin-bottom: 0.25rem;
   font-size: 0.9rem;
+  font-weight: 500; /* Slightly bolder labels */
   color: var(--text-secondary);
 }
 
 .modal input[type="text"],
 .modal input[type="file"],
-.modal select {
+.modal select,
+.modal textarea { /* Added textarea for consistency */
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -81,12 +84,14 @@ html.dark .modal {
   border-radius: 6px;
   color: var(--onSurface);
   font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s; /* Smooth transition for focus */
 }
 .modal input[type="text"]:focus,
 .modal input[type="file"]:focus,
-.modal select:focus {
+.modal select:focus,
+.modal textarea:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.3);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.3); /* Focus ring matching global focus */
   outline: none;
 }
 
@@ -94,7 +99,7 @@ html.dark .modal {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 1rem;
+  margin-top: 1.5rem; /* Increased margin for better separation */
 }
 
 .modal .btn {
@@ -105,20 +110,22 @@ html.dark .modal {
   text-transform: uppercase;
   font-size: 0.8rem;
   letter-spacing: 0.05em;
+  border: 1px solid transparent; /* Base border for consistent sizing */
 }
 
 .modal .btn-primary {
   background-color: var(--accent);
-  color: white; /* Assuming accent is dark enough for white text, adjust if not */
+  color: #FFFFFF; /* Assuming accent is dark enough for white text; define --on-accent if needed */
+  border-color: var(--accent);
 }
-html:not(.dark) .modal .btn-primary { /* Ensure contrast for light theme accent */
-    color: #FFFFFF; /* Or var(--on-accent) if defined */
-}
-html.dark .modal .btn-primary {
-    color: #FFFFFF; /* Or var(--on-accent-dark) */
-}
-.modal .btn-primary:hover {
+/* Specific theme considerations for primary button text if accent color varies significantly */
+/* html:not(.dark) .modal .btn-primary { color: #FFFFFF; } */
+/* html.dark .modal .btn-primary { color: #FFFFFF; } */
+
+.modal .btn-primary:hover,
+.modal .btn-primary:focus-visible {
   opacity: 0.85; /* General opacity hover */
+  background-color: var(--accent-variant); /* Darker accent on hover for more feedback */
 }
 
 .modal .btn-secondary {
@@ -126,22 +133,24 @@ html.dark .modal .btn-primary {
   color: var(--onSurface);
   border: 1px solid var(--border-color);
 }
-.modal .btn-secondary:hover {
+.modal .btn-secondary:hover,
+.modal .btn-secondary:focus-visible {
   background-color: rgba(var(--onSurface-rgb, 128,128,128), 0.08); /* Subtle hover based on onSurface color */
   border-color: var(--accent); /* Accent border on hover for secondary */
+  color: var(--accent); /* Change text color to accent on hover */
 }
 
 
 .modal input[type="file"] {
-  padding: 0.5rem;
+  padding: 0.5rem; /* Adjust padding for file input */
 }
 .modal input[type="file"]::file-selector-button {
   background-color: var(--accent);
-  color: white; /* Similar to btn-primary text color */
+  color: #FFFFFF; /* Similar to btn-primary text color */
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 4px;
-  margin-right: 0.5rem;
+  margin-right: 0.75rem; /* More space next to button */
   cursor: pointer;
   transition: opacity 0.2s;
 }
@@ -161,11 +170,16 @@ html.dark .modal .btn-primary {
   padding: 0.5rem;
   margin-bottom: 0.5rem;
   background-color: rgba(var(--accent-rgb), 0.05); /* Subtle background from accent */
+  transition: border-color 0.2s;
 }
+#coverPreviewContainer:hover {
+    border-color: rgba(var(--accent-rgb), 0.5); /* Highlight on hover */
+}
+
 
 #coverPreviewImage {
   max-width: 100%;
-  max-height: 128px;
+  max-height: 128px; /* Limit preview image height */
   object-fit: contain;
   border-radius: 4px;
 }
@@ -174,6 +188,7 @@ html.dark .modal .btn-primary {
   font-size: 0.875rem;
   color: var(--text-secondary);
   text-align: center;
+  padding: 0.5rem; /* Add padding to placeholder text */
 }
 
 #removeCoverBtn {
@@ -181,10 +196,10 @@ html.dark .modal .btn-primary {
   border: none;
   color: var(--error);
   text-decoration: underline;
-  font-size: 0.75rem;
+  font-size: 0.8rem; /* Slightly larger for better tap target */
   cursor: pointer;
   padding: 0.25rem 0;
-  transition: color 0.2s;
+  transition: color 0.2s, opacity 0.2s;
 }
 #removeCoverBtn:hover {
   opacity:0.8; /* Lighter error color on hover */
@@ -193,19 +208,17 @@ html.dark .modal .btn-primary {
 /* Specific adjustments for smaller screens */
 @media (max-width: 480px) {
   .modal {
-    padding: 1rem; /* Reduce padding on very small screens */
+    padding: 1.25rem; /* Adjust padding on very small screens */
   }
   .modal h2 {
-    font-size: 1.2rem; /* Slightly smaller title */
+    font-size: 1.25rem; /* Slightly smaller title */
   }
-  /* The export modal actions are already in a grid, might be okay.
-     If stacking is needed for general modals:
-  .modal .actions {
+  /* Stack buttons in actions on very small screens if needed */
+  .modal .actions.stack-on-mobile { /* Add this class to .actions div if stacking is desired */
     flex-direction: column;
     gap: 0.5rem;
   }
-  .modal .actions .btn {
-    width: 100%;
+  .modal .actions.stack-on-mobile .btn {
+    width: 100%; /* Make buttons full width when stacked */
   }
-  */
 }

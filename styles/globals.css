@@ -89,10 +89,12 @@ img {
 }
 
 /* Ensure Tailwind placeholder color uses CSS var */
-.placeholder-gray-500::placeholder {
+.placeholder-gray-500::placeholder, /* Legacy, if used directly */
+.placeholder-color-text-secondary::placeholder { /* Custom class from Tailwind config */
     color: var(--text-secondary);
     opacity: 0.7;
 }
+
 
 /* Adjust hover effects for Tailwind buttons if they don't use vars */
 .hover\:bg-gray-700\/50:hover {
