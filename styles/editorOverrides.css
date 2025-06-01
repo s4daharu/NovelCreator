@@ -14,9 +14,11 @@
   border-top-right-radius: 0 !important;
   box-shadow: none !important;
   flex-shrink: 0; /* Prevent toolbar from shrinking */
+  overflow-x: auto; /* Allow horizontal scrolling of the toolbar */
+  padding-bottom: 2px; /* Prevent scrollbar from overlapping items */
 }
 .ck.ck-toolbar.ck-toolbar_grouping > .ck-toolbar__items {
-  flex-wrap: wrap; /* Allow toolbar items to wrap on smaller screens */
+  flex-wrap: nowrap; /* Allow toolbar items to wrap on smaller screens */
 }
 
 .ck.ck-editor--classic .ck-editor__main {
@@ -91,8 +93,11 @@ html.dark .ck.ck-dropdown__panel {
     box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
 }
 
-
-.ck.ck-list__item .ck-button:hover { /* Hover state for items within dropdown lists */
+.ck.ck-dropdown__panel .ck-list__item .ck-button {
+  background-color: transparent !important; /* Ensure button background is transparent */
+  color: var(--onSurface) !important; /* Ensure text color is from theme */
+}
+.ck.ck-dropdown__panel .ck-list__item .ck-button:hover { /* Hover state for items within dropdown lists */
   background-color: rgba(var(--accent-rgb), 0.15) !important;
   color: var(--accent) !important;
 }

@@ -1,6 +1,3 @@
-
-
-
 import { 
     loadNovels, saveNovels, sanitizeFilename, fileToDataURL, 
     showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime, 
@@ -1255,6 +1252,18 @@ function renumberChapters(chapters) {
 }
 
 // -------------------- OPEN/CLOSE DRAWER --------------------
+// Helper function to handle clicks outside the drawer
+function handleDrawerOutsideClick(event) {
+    const drawer = document.getElementById(CHAPTER_DRAWER_ID);
+    const menuBtn = document.getElementById(MENU_BTN_ID);
+    // If drawer is open, and the click is not inside the drawer, and not on the menu button (or its children like an SVG icon)
+    if (drawer && drawer.classList.contains('open')) {
+        if (!drawer.contains(event.target) && event.target !== menuBtn && !menuBtn.contains(event.target)) {
+            closeChapterDrawer();
+        }
+    }
+}
+
 function openChapterDrawer() {
   const drawer = document.getElementById(CHAPTER_DRAWER_ID);
   const menuBtn = document.getElementById(MENU_BTN_ID);
@@ -1263,22 +1272,26 @@ function openChapterDrawer() {
   drawer.classList.add('open', 'translate-x-0');
   drawer.classList.remove('-translate-x-full');
   menuBtn.setAttribute('aria-expanded', 'true');
+  document.documentElement.addEventListener('mousedown', handleDrawerOutsideClick, true);
+
 
   setTimeout(() => { 
-    const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID);
-    const firstChapterItem = drawer.querySelector(`#${CHAPTER_LIST_ID} li[tabindex="0"], #${CHAPTER_LIST_ID} li[role="option"]`); // Prefer explicitly focusable or first option
-    // const addChapterBtn = document.getElementById(ADD_CHAPTER_BTN_ID); // Old button, not relevant for focus here
+    // const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID); // No longer focus search first
+    const firstChapterItem = drawer.querySelector(`#${CHAPTER_LIST_ID} li[tabindex="0"], #${CHAPTER_LIST_ID} li[role="option"]`);
     const editNovelTitleBtn = document.getElementById(EDIT_NOVEL_TITLE_BTN_ID);
     const backToLibraryBtn = document.getElementById(BACK_TO_LIBRARY_BTN_ID);
 
-    if (chapterSearchInput && chapterSearchInput.offsetParent !== null) { 
-        chapterSearchInput.focus();
-    } else if (firstChapterItem) { 
+    if (firstChapterItem && firstChapterItem.offsetParent !== null) { // Prioritize first chapter item
         firstChapterItem.focus();
-    } else if (editNovelTitleBtn && editNovelTitleBtn.offsetParent !== null) { // Focus edit title if no chapters & no search
+    } else if (editNovelTitleBtn && editNovelTitleBtn.offsetParent !== null) {
       editNovelTitleBtn.focus();
     } else if (backToLibraryBtn && backToLibraryBtn.offsetParent !== null) {
       backToLibraryBtn.focus();
+    } else { // Fallback to search if nothing else focusable or visible
+        const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID);
+        if (chapterSearchInput && chapterSearchInput.offsetParent !== null) {
+            chapterSearchInput.focus();
+        }
     }
   }, 100); 
 }
@@ -1293,6 +1306,8 @@ function closeChapterDrawer() {
   drawer.classList.remove('open', 'translate-x-0');
   drawer.classList.add('-translate-x-full');
   menuBtn.setAttribute('aria-expanded', 'false');
+  document.documentElement.removeEventListener('mousedown', handleDrawerOutsideClick, true);
+
 
   if (menuBtn && menuBtn.offsetParent !== null) { 
     if (drawer.contains(originallyFocusedElement) || originallyFocusedElement === drawer || originallyFocusedElement === menuBtn) {
@@ -2087,17 +2102,23 @@ async function openExportModal() {
 
 
     downloadEPUBBtn.addEventListener('click', async () => {
+        updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "EPUB generation library (JSZip) is not available. Please check your internet connection or try refreshing.", okText: "OK"});
+            updateSaveStatus("Export failed. Library missing.", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            updateSaveStatus("Export failed. No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) return; // Stop if metadata update failed validation
+        if (updateSucceeded === false) {
+            updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+            return; // Stop if metadata update failed validation
+        }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
@@ -2159,22 +2180,29 @@ async function openExportModal() {
 
         } catch (error) {
             console.error("EPUB Generation Error:", error, error.stack);
+            updateSaveStatus("Export failed. Check console.", "error");
             await showConfirm({title: "EPUB Export Failed", message: `Could not generate EPUB. ${error.message}. Please check console for details.`, okText:"OK"});
         }
     });
 
     downloadZIPBtn.addEventListener('click', async () => {
+        updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') { 
             await showConfirm({title: "Export Error", message: "Required library (JSZip or Turndown) is not available for Markdown export. Please check your internet connection or try refreshing.", okText: "OK"});
+            updateSaveStatus("Export failed. Library missing.", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            updateSaveStatus("Export failed. No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) return;
+        if (updateSucceeded === false) {
+             updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+            return;
+        }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
@@ -2207,22 +2235,29 @@ async function openExportModal() {
             triggerHapticFeedback([40]);
         } catch (error) {
              console.error("Markdown ZIP Generation Error:", error, error.stack);
+             updateSaveStatus("Export failed. Check console.", "error");
             await showConfirm({title: "ZIP Export Failed", message: `Could not generate Markdown ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });
 
     downloadTXTZipBtn.addEventListener('click', async () => {
+        updateSaveStatus("Processing export...", "saving");
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "ZIP library (JSZip) is not available for Text export. Please check your internet connection or try refreshing.", okText: "OK"});
+            updateSaveStatus("Export failed. Library missing.", "error");
             return;
         }
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
+            updateSaveStatus("Export failed. No chapters selected.", "error");
             return;
         }
         const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) return;
+        if (updateSucceeded === false) {
+            updateSaveStatus("Export cancelled. Metadata invalid.", "warning");
+            return;
+        }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
@@ -2255,6 +2290,7 @@ async function openExportModal() {
 
         } catch (error) {
             console.error("TXT ZIP Generation Error:", error, error.stack);
+            updateSaveStatus("Export failed. Check console.", "error");
             await showConfirm({title: "TXT ZIP Export Failed", message: `Could not generate TXT ZIP archive. ${error.message}. Please check console.`, okText:"OK"});
         }
     });
