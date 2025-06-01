@@ -215,3 +215,8 @@ html:not(.dark) .ck-content pre { /* Light theme for code blocks */
   color: inherit; /* Inherit from <pre> for code within blocks */
   font-size: inherit;
 }
+
+/* Hide "Powered by CKEditor" branding */
+.ck.ck-powered-by {
+    display: none !important;
+}
