@@ -1,7 +1,7 @@
-import { 
-    loadNovels, saveNovels, sanitizeFilename, fileToDataURL, 
-    showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime, 
-    loadAppSettings, saveAppSettings, htmlToPlainText, triggerHapticFeedback 
+import {
+    loadNovels, saveNovels, sanitizeFilename, fileToDataURL,
+    showPrompt, showConfirm, debounce, formatRelativeTime, formatSimpleTime,
+    loadAppSettings, saveAppSettings, htmlToPlainText, triggerHapticFeedback
 } from './utils.js';
 
 let novels = [];
@@ -178,7 +178,7 @@ function updateSaveStatus(message = "", type = 'info', autoClearDelay = 2500) {
 
     clearTimeout(saveStatusTimeout);
     statusEl.textContent = message;
-    
+
     statusEl.classList.remove('text-color-text-secondary', 'text-[var(--secondary)]', 'text-color-error', 'text-yellow-400', 'scale-100', 'scale-105', 'opacity-0', 'opacity-100');
     statusEl.setAttribute('aria-live', 'polite');
 
@@ -223,7 +223,7 @@ function updateSaveStatus(message = "", type = 'info', autoClearDelay = 2500) {
         if (!isPersistent) {
             saveStatusTimeout = setTimeout(() => {
                 statusEl.classList.remove('opacity-100', 'scale-105');
-                statusEl.classList.add('opacity-0'); 
+                statusEl.classList.add('opacity-0');
                 statusEl.setAttribute('aria-live', 'off');
                 if(lastSavedEl) updateLastSavedDisplay(); // Ensure last saved status is accurate after message clears
             }, autoClearDelay);
@@ -272,7 +272,7 @@ function setupGlobalEventListeners() {
 
      window.addEventListener('resize', debounce(() => {
         if (currentNovelId && window.innerWidth >= 768) { // md breakpoint
-            const currentAppSettings = loadAppSettings(); 
+            const currentAppSettings = loadAppSettings();
             if (currentAppSettings.autoOpenDrawerDesktop) {
                 openChapterDrawer();
             }
@@ -282,7 +282,7 @@ function setupGlobalEventListeners() {
     window.addEventListener('beforeunload', (event) => {
         if (currentNovelId && isEditorDirty) {
             // Standard way to trigger "unsaved changes" dialog in browser
-            event.preventDefault(); 
+            event.preventDefault();
             event.returnValue = ''; // For older browsers
         }
     });
@@ -329,7 +329,7 @@ function openSettingsModal() {
                 <label for="settingDefaultAuthor" class="block text-sm font-medium text-color-onSurface mb-1">Default Author Name</label>
                 <input type="text" id="settingDefaultAuthor" value="${currentSettings.defaultAuthor || ''}" placeholder="Your Pen Name" class="w-full p-2 bg-color-input-bg border border-color-border rounded text-color-onSurface">
             </div>
-            
+
             <div class="mb-4">
                 <label for="settingEditorScale" class="block text-sm font-medium text-color-onSurface mb-1">Editor Font Scale (${currentSettings.editorScale.toFixed(2)}x)</label>
                 <input type="range" id="settingEditorScale" min="0.75" max="2" step="0.05" value="${currentSettings.editorScale}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
@@ -456,7 +456,7 @@ function setupNovelSearch() {
         novelSearchInputEl.addEventListener('input', () => {
             currentNovelSearchTerm = novelSearchInputEl.value.trim().toLowerCase();
             if (novelSearchClearBtnEl) novelSearchClearBtnEl.classList.toggle('hidden', !currentNovelSearchTerm);
-            renderLibraryView(); 
+            renderLibraryView();
         });
         novelSearchInputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -489,18 +489,18 @@ function renderLibraryView() {
 
   document.getElementById(PAGE_TITLE_ID).innerText = 'My Novels';
   document.getElementById(EXPORT_BTN_ID)?.classList.add('hidden');
-  
+
   const menuBtn = document.getElementById(MENU_BTN_ID);
   if (menuBtn) {
     menuBtn.classList.add('md:hidden', 'hidden'); // Hide on library view
     menuBtn.setAttribute('aria-expanded', 'false');
   }
-  
+
   document.getElementById(CHAPTER_DRAWER_ID)?.classList.remove('open', 'translate-x-0');
   document.getElementById(CHAPTER_DRAWER_ID)?.classList.add('md:hidden', '-translate-x-full');
   document.getElementById(BACK_TO_LIBRARY_BTN_ID)?.classList.add('hidden');
   document.getElementById(EDIT_NOVEL_TITLE_BTN_ID)?.classList.add('hidden');
-  
+
   const settingsBtn = document.getElementById(SETTINGS_BTN_ID);
   if (settingsBtn) {
     settingsBtn.classList.remove('hidden');
@@ -654,7 +654,7 @@ function renderLibraryView() {
                 triggerHapticFeedback([40]);
                 novels = novels.filter(n => n.id !== novel.id);
                 saveNovels(novels);
-                renderLibraryView(); 
+                renderLibraryView();
             }
           });
           li.addEventListener('click', openNovelAction);
@@ -670,8 +670,8 @@ function renderLibraryView() {
 
       // Keyboard navigation for novel list
       if (listEl.children.length > 0 && !listEl.dataset.keyboardNavAttached && filteredNovels.length > 0) {
-          listEl.dataset.keyboardNavAttached = 'true'; 
-          listEl.addEventListener('keydown', (e) => { 
+          listEl.dataset.keyboardNavAttached = 'true';
+          listEl.addEventListener('keydown', (e) => {
               const items = Array.from(listEl.querySelectorAll('li[tabindex="0"]'));
               if (!items.length) return;
               let currentIndex = items.findIndex(item => item === document.activeElement);
@@ -698,7 +698,7 @@ function renderLibraryView() {
   const restoreBtn = document.getElementById('restoreNovelsBtn');
   const restoreFileInput = document.getElementById('restoreFileInput');
 
-  if(backupBtn) { 
+  if(backupBtn) {
     backupBtn.addEventListener('click', () => {
         triggerHapticFeedback([20]);
         if (novels.length === 0) {
@@ -722,7 +722,7 @@ function renderLibraryView() {
     });
   }
 
-  if(restoreBtn && restoreFileInput) { 
+  if(restoreBtn && restoreFileInput) {
     restoreBtn.addEventListener('click', () => {
         triggerHapticFeedback([20]);
         restoreFileInput.click()
@@ -736,7 +736,7 @@ function renderLibraryView() {
             const importedData = JSON.parse(fileContent);
             if (!Array.isArray(importedData) || !importedData.every(n => n && typeof n.id === 'string' && typeof n.title === 'string' && Array.isArray(n.chapters) && n.chapters.every(c => c && typeof c.id === 'string' && typeof c.title === 'string' && typeof c.order === 'number' && typeof c.contentHTML === 'string'))) {
                 updateSaveStatus("Restore failed: Invalid backup file format.", 'error', 4000);
-                restoreFileInput.value = ''; 
+                restoreFileInput.value = '';
                 return;
             }
             const confirmed = await showConfirm({
@@ -748,7 +748,7 @@ function renderLibraryView() {
             if (confirmed) {
                 triggerHapticFeedback([40]);
                 // Ensure all necessary fields, add defaults, and re-validate IDs
-                novels = importedData.map(novel => ({ 
+                novels = importedData.map(novel => ({
                     ...novel,
                     id: novel.id || crypto.randomUUID(),
                     title: novel.title || "Untitled Novel",
@@ -768,7 +768,7 @@ function renderLibraryView() {
                     }))
                 }));
                 saveNovels(novels);
-                currentNovelSearchTerm = ''; 
+                currentNovelSearchTerm = '';
                 renderLibraryView();
                 updateSaveStatus("Novels restored successfully!", "success");
             }
@@ -776,10 +776,10 @@ function renderLibraryView() {
             console.error("Restore error:", e, e.stack);
             updateSaveStatus("Restore failed: Could not parse backup file.", 'error', 4000);
         }
-        restoreFileInput.value = ''; 
+        restoreFileInput.value = '';
     });
   }
-  setupNovelSearch(); 
+  setupNovelSearch();
 
   // Focus logic for library view
   if (filteredNovels.length > 0) {
@@ -787,12 +787,12 @@ function renderLibraryView() {
     if (firstLibraryItem && (!document.activeElement || document.activeElement === document.body || document.activeElement === contentArea)) {
       firstLibraryItem.focus();
     }
-  } else if (novels.length === 0) { 
+  } else if (novels.length === 0) {
     const createFirstBtn = document.getElementById('createFirstNovelBtnInPlaceholder');
     if (createFirstBtn && (!document.activeElement || document.activeElement === document.body)) {
       createFirstBtn.focus();
     }
-  } else if (currentNovelSearchTerm && filteredNovels.length === 0) { 
+  } else if (currentNovelSearchTerm && filteredNovels.length === 0) {
     if (novelSearchInputEl && (!document.activeElement || document.activeElement === document.body)) {
       novelSearchInputEl.focus();
     }
@@ -804,7 +804,7 @@ async function handleNewNovelClick() {
     const title = await showPrompt({ title: 'New Novel Title', placeholder: 'Enter novel title…' });
     if (title === null) return; // User cancelled
     triggerHapticFeedback([40]);
-    const currentSettings = loadAppSettings(); 
+    const currentSettings = loadAppSettings();
     const now = new Date().toISOString();
     const newNovel = {
       id: crypto.randomUUID(),
@@ -813,7 +813,7 @@ async function handleNewNovelClick() {
       createdAt: now,
       updatedAt: now,
       coverDataURL: null,
-      language: 'en-US', 
+      language: 'en-US',
       chapters: []
     };
     novels.unshift(newNovel); // Add to the beginning of the array for immediate visibility if sorted by update
@@ -833,7 +833,7 @@ function setupChapterSearch(novel) {
         chapterSearchInputEl.addEventListener('input', () => {
             currentChapterSearchTerm = chapterSearchInputEl.value.trim().toLowerCase();
             if(chapterSearchClearBtnEl) chapterSearchClearBtnEl.classList.toggle('hidden', !currentChapterSearchTerm);
-            renderChapterList(novel); 
+            renderChapterList(novel);
         });
          chapterSearchInputEl.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -863,24 +863,24 @@ async function renderEditorView() {
       return renderLibraryView();
   }
 
-  appSettings = loadAppSettings(); 
-  currentNovelSearchTerm = ''; 
+  appSettings = loadAppSettings();
+  currentNovelSearchTerm = '';
   if (novelSearchInputEl) novelSearchInputEl.value = '';
   if (novelSearchClearBtnEl) novelSearchClearBtnEl.classList.add('hidden');
 
 
   updateURL(novel.id, currentChapterId);
-  isEditorDirty = false; 
+  isEditorDirty = false;
 
   document.getElementById(PAGE_TITLE_ID).innerText = novel.title || 'Untitled Novel';
   document.getElementById(EXPORT_BTN_ID)?.classList.remove('hidden');
   const menuBtn = document.getElementById(MENU_BTN_ID);
-  menuBtn?.classList.remove('hidden', 'md:hidden'); 
-  document.getElementById(CHAPTER_DRAWER_ID)?.classList.remove('md:hidden'); 
+  menuBtn?.classList.remove('hidden', 'md:hidden');
+  document.getElementById(CHAPTER_DRAWER_ID)?.classList.remove('md:hidden');
   document.getElementById(BACK_TO_LIBRARY_BTN_ID)?.classList.remove('hidden');
   document.getElementById(EDIT_NOVEL_TITLE_BTN_ID)?.classList.remove('hidden');
-  document.getElementById(SETTINGS_BTN_ID)?.classList.add('hidden'); 
-  document.getElementById(THEME_TOGGLE_BTN_ID)?.classList.remove('hidden'); 
+  document.getElementById(SETTINGS_BTN_ID)?.classList.add('hidden');
+  document.getElementById(THEME_TOGGLE_BTN_ID)?.classList.remove('hidden');
 
   const addChapterFab = document.getElementById(ADD_CHAPTER_FAB_ID);
   if (addChapterFab) {
@@ -892,16 +892,16 @@ async function renderEditorView() {
   if (window.innerWidth >= 768 && appSettings.autoOpenDrawerDesktop) { // md breakpoint
     openChapterDrawer();
   } else {
-    closeChapterDrawer(); 
+    closeChapterDrawer();
   }
 
-  renderChapterList(novel); 
+  renderChapterList(novel);
 
   const contentArea = document.getElementById(CONTENT_AREA_ID);
   if (!contentArea) return;
   contentArea.innerHTML = `
     <h3 id="${ACTIVE_CHAPTER_TITLE_DISPLAY_ID}" class="text-lg font-semibold mb-3 text-color-onSurface truncate px-1" aria-live="polite"></h3>
-    <div class="flex flex-col h-[calc(100%-2.5rem)]"> 
+    <div class="flex flex-col h-[calc(100%-2.5rem)]">
       <div id="${EDITOR_CONTAINER_ID}" class="outline-none flex-grow min-h-0" tabindex="-1" role="document" aria-label="Chapter content editor"></div>
       <div id="${EDITOR_STATUS_BAR_ID}" class="flex-shrink-0 p-2 border-t border-[var(--border-color)] text-xs text-[var(--text-secondary)] flex justify-end items-center gap-x-3" role="status" aria-live="polite">
         <span id="${CHARACTER_COUNT_DISPLAY_ID}">Chars: 0</span>
@@ -916,17 +916,17 @@ async function renderEditorView() {
 
 
   if (!novel.chapters.length) {
-    currentChapterId = null; 
+    currentChapterId = null;
     clearEditorPlaceholder();
   } else {
     let chapterToLoad;
     const sortedChapters = novel.chapters.slice().sort((a,b) => a.order - b.order);
     if (currentChapterId && sortedChapters.some(c => c.id === currentChapterId)) {
       chapterToLoad = sortedChapters.find(c => c.id === currentChapterId);
-    } else { 
+    } else {
       chapterToLoad = sortedChapters[0];
       currentChapterId = chapterToLoad.id;
-      updateURL(novel.id, currentChapterId); 
+      updateURL(novel.id, currentChapterId);
     }
     await loadChapterIntoEditor(chapterToLoad);
   }
@@ -989,9 +989,9 @@ async function handleNewChapterFabClick() {
 
     renderChapterList(novel); // Re-render list to show new chapter & update active state
     await loadChapterIntoEditor(newChapter); // Load new chapter into editor
-    
+
     closeChapterDrawerOnMobile(); // Close drawer if open on mobile after adding
-    
+
     const chapterListEl = document.getElementById(CHAPTER_LIST_ID);
     const newChapterLi = chapterListEl?.querySelector(`li[data-chapter-id="${newChapter.id}"]`);
     newChapterLi?.focus(); // Focus the new chapter in the list
@@ -1018,9 +1018,9 @@ function renderChapterList(novel) {
             updateSaveStatus("Novel title updated", "success");
             triggerHapticFeedback([20]);
             if (document.getElementById(PAGE_TITLE_ID)) {
-                document.getElementById(PAGE_TITLE_ID).innerText = novel.title; 
+                document.getElementById(PAGE_TITLE_ID).innerText = novel.title;
             }
-            if (novelTitleDisplay) novelTitleDisplay.innerText = novel.title; 
+            if (novelTitleDisplay) novelTitleDisplay.innerText = novel.title;
         }
     };
   }
@@ -1028,8 +1028,8 @@ function renderChapterList(novel) {
 
   const listEl = document.getElementById(CHAPTER_LIST_ID);
   if (!listEl) return;
-  listEl.innerHTML = ''; 
-  delete listEl.dataset.keyboardNavAttached; 
+  listEl.innerHTML = '';
+  delete listEl.dataset.keyboardNavAttached;
 
   // Sort chapters by order before filtering for search
   const sortedNovelChapters = novel.chapters.slice().sort((a, b) => a.order - b.order);
@@ -1052,7 +1052,7 @@ function renderChapterList(novel) {
         <p class="text-xs">Use the floating '+' button to add your first one.</p>
     `;
     listEl.appendChild(emptyStateDiv);
-    if (chapterSortable) { 
+    if (chapterSortable) {
         chapterSortable.destroy();
         chapterSortable = null;
     }
@@ -1062,17 +1062,17 @@ function renderChapterList(novel) {
     noResultsLi.setAttribute('role', 'status');
     noResultsLi.innerHTML = `<p>No chapters match "<strong>${currentChapterSearchTerm}</strong>".</p><p class="text-xs mt-1">Try a different search term or clear the search.</p>`;
     listEl.appendChild(noResultsLi);
-    if (chapterSortable) { 
+    if (chapterSortable) {
         chapterSortable.destroy();
         chapterSortable = null;
     }
   } else {
-    let activeLi = null; 
+    let activeLi = null;
     chaptersToDisplay.forEach(ch => {
       const li = document.createElement('li');
       li.dataset.chapterId = ch.id;
       li.className = `flex justify-between items-center p-2.5 rounded-md cursor-pointer group hover:bg-color-accent/10`;
-      li.setAttribute('role', 'option'); 
+      li.setAttribute('role', 'option');
       li.tabIndex = -1; // Initially not focusable, will be made 0 by keyboard nav logic
       li.setAttribute('aria-label', `Chapter ${ch.order}: ${ch.title || 'Untitled Chapter'}`);
       if (ch.id === currentChapterId) li.setAttribute('aria-selected', 'true');
@@ -1097,19 +1097,19 @@ function renderChapterList(novel) {
       listEl.appendChild(li);
 
       if (ch.id === currentChapterId) {
-        activeLi = li; 
-        li.classList.add('active-chapter', 'bg-color-accent/15'); 
+        activeLi = li;
+        li.classList.add('active-chapter', 'bg-color-accent/15');
         li.tabIndex = 0; // Make active chapter focusable
       }
 
       const loadThisChapter = async () => {
         if (!(await confirmDiscardChanges())) return;
-        if (currentChapterId !== ch.id) { 
+        if (currentChapterId !== ch.id) {
           triggerHapticFeedback([10]);
-          await saveCurrentChapterData(); 
+          await saveCurrentChapterData();
           currentChapterId = ch.id;
           updateURL(novel.id, ch.id);
-          await loadChapterIntoEditor(ch); 
+          await loadChapterIntoEditor(ch);
           listEl.querySelectorAll('li.active-chapter').forEach(item => {
               item.classList.remove('active-chapter', 'bg-color-accent/15');
               item.setAttribute('aria-selected', 'false');
@@ -1136,7 +1136,7 @@ function renderChapterList(novel) {
 
 
       li.querySelector('[data-action="delete"]')?.addEventListener('click', async ev => {
-        ev.stopPropagation(); 
+        ev.stopPropagation();
         const confirmed = await showConfirm({
           title: 'Delete Chapter',
           message: `Are you sure you want to delete chapter “${ch.title || 'Untitled Chapter'}”? This cannot be undone.`,
@@ -1146,7 +1146,7 @@ function renderChapterList(novel) {
         if (!confirmed) return;
         triggerHapticFeedback([40]);
         const chapterWasActive = currentChapterId === ch.id;
-        if(chapterWasActive) isEditorDirty = false; 
+        if(chapterWasActive) isEditorDirty = false;
 
         novel.chapters = novel.chapters.filter(c => c.id !== ch.id);
         renumberChapters(novel.chapters);
@@ -1154,15 +1154,15 @@ function renderChapterList(novel) {
         saveNovels(novels);
         updateSaveStatus("Chapter deleted", 'success', 1500);
         renderChapterList(novel); // Re-render
-        handlePostChapterDeletionFocus(); 
+        handlePostChapterDeletionFocus();
 
-        if (chapterWasActive) { 
-          currentChapterId = novel.chapters.sort((a,b) => a.order - b.order)[0]?.id || null; 
+        if (chapterWasActive) {
+          currentChapterId = novel.chapters.sort((a,b) => a.order - b.order)[0]?.id || null;
           updateURL(novel.id, currentChapterId);
           if (currentChapterId) {
             await loadChapterIntoEditor(novel.chapters.find(c => c.id === currentChapterId));
           } else {
-            clearEditorPlaceholder(); 
+            clearEditorPlaceholder();
           }
         }
       });
@@ -1178,7 +1178,7 @@ function renderChapterList(novel) {
         listEl.addEventListener('keydown', (e) => {
             const items = Array.from(listEl.querySelectorAll('li[role="option"]')); // Select by role
             if (!items.length) return;
-            
+
             let currentFocusedIndex = items.findIndex(item => item === document.activeElement || item.tabIndex === 0);
             if (currentFocusedIndex === -1) currentFocusedIndex = 0; // Default to first if none focused
 
@@ -1190,7 +1190,7 @@ function renderChapterList(novel) {
                 else if (e.key === 'ArrowUp') currentFocusedIndex = (currentFocusedIndex - 1 + items.length) % items.length;
                 else if (e.key === 'Home') currentFocusedIndex = 0;
                 else if (e.key === 'End') currentFocusedIndex = items.length - 1;
-                
+
                 if (items[currentFocusedIndex]) {
                     items[currentFocusedIndex].tabIndex = 0; // Make target focusable
                     items[currentFocusedIndex].focus();
@@ -1209,29 +1209,29 @@ function renderChapterList(novel) {
     if (chaptersToDisplay.length > 0 && !currentChapterSearchTerm) { // Only init sortable if not searching and items exist
         chapterSortable = Sortable.create(listEl, {
           animation: 150,
-          ghostClass: 'sortable-ghost', 
+          ghostClass: 'sortable-ghost',
           chosenClass: 'sortable-chosen',
           dragClass: 'sortable-drag',
-          handle: '.chapter-title', 
+          handle: '.chapter-title',
           onEnd: evt => {
             triggerHapticFeedback([20,30,20]);
             const { oldDraggableIndex, newDraggableIndex } = evt;
 
             const movedChapter = novel.chapters.splice(oldDraggableIndex, 1)[0];
             novel.chapters.splice(newDraggableIndex, 0, movedChapter);
-            
-            renumberChapters(novel.chapters); 
+
+            renumberChapters(novel.chapters);
             touchNovel(novel.id);
             saveNovels(novels);
             updateSaveStatus("Order saved", 'success', 1500);
             listEl.classList.add('list-reordered-flash');
             setTimeout(() => {
                 listEl.classList.remove('list-reordered-flash');
-                renderChapterList(novel); 
+                renderChapterList(novel);
                 // Re-focus the moved item
                 const movedLi = listEl.querySelector(`li[data-chapter-id="${movedChapter.id}"]`);
                 movedLi?.focus();
-            }, 700); 
+            }, 700);
           }
         });
     } else if (chapterSortable) { // Destroy if searching or no items
@@ -1241,8 +1241,8 @@ function renderChapterList(novel) {
   }
 
   // The old addChapterBtn logic is removed as the button is now a FAB handled in renderEditorView
-   setupChapterListGestures(); 
-   setupChapterSearch(novel); 
+   setupChapterListGestures();
+   setupChapterSearch(novel);
 }
 
 function renumberChapters(chapters) {
@@ -1275,7 +1275,7 @@ function openChapterDrawer() {
   document.documentElement.addEventListener('mousedown', handleDrawerOutsideClick, true);
 
 
-  setTimeout(() => { 
+  setTimeout(() => {
     // const chapterSearchInput = document.getElementById(CHAPTER_SEARCH_INPUT_ID); // No longer focus search first
     const firstChapterItem = drawer.querySelector(`#${CHAPTER_LIST_ID} li[tabindex="0"], #${CHAPTER_LIST_ID} li[role="option"]`);
     const editNovelTitleBtn = document.getElementById(EDIT_NOVEL_TITLE_BTN_ID);
@@ -1293,7 +1293,7 @@ function openChapterDrawer() {
             // chapterSearchInput.focus(); // Do not focus search input on open
         }
     }
-  }, 100); 
+  }, 100);
 }
 
 function closeChapterDrawer() {
@@ -1301,7 +1301,7 @@ function closeChapterDrawer() {
   const menuBtn = document.getElementById(MENU_BTN_ID);
   if (!drawer || !menuBtn) return;
 
-  const originallyFocusedElement = document.activeElement; 
+  const originallyFocusedElement = document.activeElement;
 
   drawer.classList.remove('open', 'translate-x-0');
   drawer.classList.add('-translate-x-full');
@@ -1309,7 +1309,7 @@ function closeChapterDrawer() {
   document.documentElement.removeEventListener('mousedown', handleDrawerOutsideClick, true);
 
 
-  if (menuBtn && menuBtn.offsetParent !== null) { 
+  if (menuBtn && menuBtn.offsetParent !== null) {
     if (drawer.contains(originallyFocusedElement) || originallyFocusedElement === drawer || originallyFocusedElement === menuBtn) {
         menuBtn.focus();
     }
@@ -1340,7 +1340,7 @@ function calculateWordCount(htmlString) {
   tempDiv.innerHTML = htmlString; // Let browser parse HTML to text
   const text = tempDiv.textContent || tempDiv.innerText || "";
   // Regex for words: sequence of alphanumeric chars, possibly with hyphens/apostrophes in between
-  const words = text.match(/\b[a-zA-Z0-9'-]+\b/g); 
+  const words = text.match(/\b[a-zA-Z0-9'-]+\b/g);
   return words ? words.length : 0;
 }
 
@@ -1358,7 +1358,7 @@ function calculateCharacterCount(htmlString, excludeSpaces = true) {
 const debouncedUpdateEditorStats = debounce(() => {
   if (editorInstance) {
     const htmlContent = editorInstance.getData();
-    
+
     const wordCount = calculateWordCount(htmlContent);
     const wordCountEl = document.getElementById(WORD_COUNT_DISPLAY_ID);
     if (wordCountEl) wordCountEl.textContent = `Words: ${wordCount}`;
@@ -1376,7 +1376,7 @@ const debouncedUpdateEditorStats = debounce(() => {
 
 async function saveChapterContentInternal() {
     if (!editorInstance || !currentChapterId || !currentNovelId) {
-        return false; 
+        return false;
     }
     updateSaveStatus("Saving...", 'saving');
     const novel = novels.find(n => n.id === currentNovelId);
@@ -1389,17 +1389,17 @@ async function saveChapterContentInternal() {
         chapter.contentHTML = editorInstance.getData();
         chapter.updatedAt = new Date().toISOString();
         touchNovel(novel.id); // Update novel's updatedAt timestamp as well
-        saveNovels(novels); 
+        saveNovels(novels);
         updateSaveStatus("Saved ✓", 'success');
         triggerHapticFeedback([20]);
-        isEditorDirty = false; 
-        lastSuccessfulSaveTimestamp = new Date(chapter.updatedAt); 
-        updateLastSavedDisplay(); 
-        return true; 
+        isEditorDirty = false;
+        lastSuccessfulSaveTimestamp = new Date(chapter.updatedAt);
+        updateLastSavedDisplay();
+        return true;
     } else {
         updateSaveStatus("Save failed: chapter not found", 'error');
         isEditorDirty = true; // Remain dirty if save failed
-        return false; 
+        return false;
     }
 }
 
@@ -1424,12 +1424,12 @@ async function loadChapterIntoEditor(chapter) {
   isEditorDirty = false;
 
   if (!chapter) {
-    clearEditorPlaceholder(); 
+    clearEditorPlaceholder();
     return;
   }
-  await destroyEditorInstance(); 
+  await destroyEditorInstance();
 
-  if (!editorPlaceholderEl) { 
+  if (!editorPlaceholderEl) {
     console.error("Editor placeholder element not found after potential destroy.");
     if (activeChapterTitleDisplayEl) activeChapterTitleDisplayEl.textContent = 'Error loading chapter';
     return;
@@ -1440,7 +1440,7 @@ async function loadChapterIntoEditor(chapter) {
   }
 
   try {
-    editorInstance = await ClassicEditor.create(editorPlaceholderEl, { 
+    editorInstance = await ClassicEditor.create(editorPlaceholderEl, {
       toolbar: {
         items: [
             'heading', '|', 'bold', 'italic', /* 'underline', 'strikethrough', */ '|',
@@ -1451,7 +1451,7 @@ async function loadChapterIntoEditor(chapter) {
       },
       table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] },
       codeBlock: { // This config is likely unused if codeBlock plugin isn't in the build
-        languages: [ 
+        languages: [
             { language: 'plaintext', label: 'Plain text' }, { language: 'javascript', label: 'JavaScript' },
             { language: 'python', label: 'Python' }, { language: 'html', label: 'HTML' },
             { language: 'css', label: 'CSS' }, { language: 'java', label: 'Java' }, { language: 'c', label: 'C' },
@@ -1466,9 +1466,9 @@ async function loadChapterIntoEditor(chapter) {
     if (editorInstance && editorInstance.ui && editorInstance.ui.element) {
         editorInstance.ui.element.classList.add('flex-grow', 'min-h-0', 'flex', 'flex-col');
     }
-    
-    editorInstance.setData(chapter.contentHTML || '<p></p>'); 
-    isEditorDirty = false; 
+
+    editorInstance.setData(chapter.contentHTML || '<p></p>');
+    isEditorDirty = false;
 
     if (editorInstance.editing?.view?.focus) { // Safely access focus
         editorInstance.editing.view.focus();
@@ -1478,20 +1478,20 @@ async function loadChapterIntoEditor(chapter) {
     }
 
     debouncedUpdateEditorStats(); // Update stats with loaded content
-    lastSuccessfulSaveTimestamp = new Date(chapter.updatedAt); 
+    lastSuccessfulSaveTimestamp = new Date(chapter.updatedAt);
     updateLastSavedDisplay();
 
     editorInstance.model.document.on('change:data', () => {
         isEditorDirty = true;
-        updateSaveStatus("Unsaved changes", 'warning'); 
-        debouncedSave(); 
+        updateSaveStatus("Unsaved changes", 'warning');
+        debouncedSave();
         debouncedUpdateEditorStats();
     });
-    updateSaveStatus('', 'clear'); 
+    updateSaveStatus('', 'clear');
 
     if (editorInstance?.ui?.view?.editable?.element) {
-        requestAnimationFrame(() => { 
-            if (editorInstance?.ui?.view?.editable?.element) { 
+        requestAnimationFrame(() => {
+            if (editorInstance?.ui?.view?.editable?.element) {
                  editorInstance.ui.view.editable.element.scrollTop = 0;
             }
         });
@@ -1512,18 +1512,18 @@ async function loadChapterIntoEditor(chapter) {
 async function saveCurrentChapterData() {
   if (editorInstance && currentChapterId && currentNovelId) {
     if (debouncedSave._timeoutId) { // Check if a debounced save is pending
-        clearTimeout(debouncedSave._timeoutId); 
+        clearTimeout(debouncedSave._timeoutId);
     }
-    return await saveChapterContentInternal(); 
+    return await saveChapterContentInternal();
   }
-  return false; 
+  return false;
 }
 
 async function destroyEditorInstance() {
     if (isEditorDirty) {
-      await saveCurrentChapterData(); 
+      await saveCurrentChapterData();
     }
-    destroyEditorGestures(); 
+    destroyEditorGestures();
     if (editorInstance) {
         try {
             await editorInstance.destroy();
@@ -1532,17 +1532,17 @@ async function destroyEditorInstance() {
         }
         editorInstance = null;
     }
-    isEditorDirty = false; 
+    isEditorDirty = false;
 }
 
 function clearEditorPlaceholder() {
   const activeChapterTitleDisplayEl = document.getElementById(ACTIVE_CHAPTER_TITLE_DISPLAY_ID);
-  destroyEditorInstance().then(() => { 
+  destroyEditorInstance().then(() => {
     const editorContainer = document.getElementById(EDITOR_CONTAINER_ID);
     if (editorContainer) {
-        editorContainer.classList.add('flex-grow', 'min-h-0'); 
+        editorContainer.classList.add('flex-grow', 'min-h-0');
         const novel = novels.find(n => n.id === currentNovelId);
-        if (novel && novel.chapters.length === 0) { 
+        if (novel && novel.chapters.length === 0) {
             if(activeChapterTitleDisplayEl) activeChapterTitleDisplayEl.textContent = "Write Your First Chapter";
             editorContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-full text-center p-4 text-color-text-secondary" role="region" aria-label="First chapter creation prompt">
@@ -1559,17 +1559,17 @@ function clearEditorPlaceholder() {
             `;
             const createFirstChapterBtn = document.getElementById('createFirstChapterBtnInPlaceholder');
             const addChapterFab = document.getElementById(ADD_CHAPTER_FAB_ID); // Target FAB
-            if (createFirstChapterBtn && addChapterFab) { 
+            if (createFirstChapterBtn && addChapterFab) {
                 createFirstChapterBtn.onclick = () => addChapterFab.click(); // Trigger FAB click
-                createFirstChapterBtn.focus(); 
+                createFirstChapterBtn.focus();
             }
-        } else { 
+        } else {
             if(activeChapterTitleDisplayEl) activeChapterTitleDisplayEl.textContent = 'No Chapter Selected';
             editorContainer.innerHTML = '<div class="flex items-center justify-center h-full text-color-text-secondary p-8 text-center" role="status"><p>Select a chapter to start editing, or create a new one.</p></div>';
         }
     }
     debouncedUpdateEditorStats(); // Will show 0 counts
-    updateSaveStatus('', 'clear'); 
+    updateSaveStatus('', 'clear');
     isEditorDirty = false;
     lastSuccessfulSaveTimestamp = null;
     updateLastSavedDisplay();
@@ -1588,43 +1588,43 @@ function generateContainerXML() {
 
 function generateStyleCSS() {
     // Basic CSS for EPUB. More advanced styling could be added.
-    return `body { 
-  font-family: sans-serif; 
-  margin: 5%; 
-  line-height: 1.5; 
-  text-align: justify; 
+    return `body {
+  font-family: sans-serif;
+  margin: 5%;
+  line-height: 1.5;
+  text-align: justify;
 }
-h1, h2, h3, h4, h5, h6 { 
-  margin-top: 1.5em; 
-  margin-bottom: 0.5em; 
-  line-height: 1.2; 
-  text-align:left; 
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.2;
+  text-align:left;
   font-weight: bold;
 }
-p { 
-  margin-top: 0.5em; 
-  margin-bottom: 0.5em; 
+p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
 }
-img { 
-  max-width: 100%; 
-  height: auto; 
-  display:block; 
-  margin: 1em auto; 
+img {
+  max-width: 100%;
+  height: auto;
+  display:block;
+  margin: 1em auto;
   page-break-inside: avoid; /* Try to keep images from splitting across pages */
 }
-div.cover-image-container { 
-  width: 100%; 
+div.cover-image-container {
+  width: 100%;
   height: 100vh; /* Full viewport height for cover */
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  margin:0; 
-  padding:0; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin:0;
+  padding:0;
 }
-div.cover-image-container img { 
-  max-width: 100%; 
-  max-height: 100vh; 
-  object-fit: contain; 
+div.cover-image-container img {
+  max-width: 100%;
+  max-height: 100vh;
+  object-fit: contain;
 }
 blockquote {
   margin: 1em 40px;
@@ -1713,7 +1713,7 @@ function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, ch
         coverImageManifest = `<item id="cover-image" href="images/${coverMeta.filename}" media-type="${coverMeta.mimeType}"/>`;
         coverPageManifest = `<item id="cover-page" href="cover.xhtml" media-type="application/xhtml+xml"/>`;
         coverMetaTag = `<meta name="cover" content="cover-image"/>`; // EPUB 2 cover convention
-        coverSpineItem = `<itemref idref="cover-page" linear="yes"/>`; 
+        coverSpineItem = `<itemref idref="cover-page" linear="yes"/>`;
         coverGuideReference = `<guide><reference type="cover" title="Cover" href="cover.xhtml"/></guide>`;
     }
 
@@ -1789,7 +1789,7 @@ function generateChapterXHTML(chapter, language) {
 // -------------------- EXPORT MODAL --------------------
 async function openExportModal() {
     if (!currentNovelId) return;
-    await saveCurrentChapterData(); 
+    await saveCurrentChapterData();
     const novel = novels.find(n => n.id === currentNovelId);
     if (!novel) return;
 
@@ -1800,7 +1800,7 @@ async function openExportModal() {
     triggerHapticFeedback([10]);
     const triggeringElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     let overlay = document.getElementById('exportModalOverlay');
-    if (overlay) overlay.remove(); 
+    if (overlay) overlay.remove();
 
     overlay = document.createElement('div');
     overlay.id = 'exportModalOverlay';
@@ -1810,7 +1810,7 @@ async function openExportModal() {
     overlay.setAttribute('aria-labelledby', 'exportModalTitle');
 
 
-    const currentSettings = loadAppSettings(); 
+    const currentSettings = loadAppSettings();
     const languageOptions = [ // Common languages, can be expanded
         { value: 'en', text: 'English' }, { value: 'en-US', text: 'English (US)' }, { value: 'en-GB', text: 'English (UK)' },
         { value: 'es', text: 'Spanish' }, { value: 'es-ES', text: 'Spanish (Spain)' }, { value: 'es-MX', text: 'Spanish (Mexico)' },
@@ -1819,7 +1819,7 @@ async function openExportModal() {
         { value: 'ja', text: 'Japanese' }, { value: 'zh', text: 'Chinese' },
         { value: 'other', text: 'Other (Specify BCP 47 code)' }
     ];
-    
+
     let initialLanguageIsOther = false;
     let initialOtherLanguageValue = '';
     if (novel.language && !languageOptions.some(opt => opt.value === novel.language && opt.value !== 'other')) {
@@ -1901,8 +1901,8 @@ async function openExportModal() {
         </div>
     `;
     document.body.appendChild(overlay);
-    document.body.classList.add('body-modal-open'); 
-    requestAnimationFrame(() => overlay.classList.add('active')); 
+    document.body.classList.add('body-modal-open');
+    requestAnimationFrame(() => overlay.classList.add('active'));
 
     const titleInputEl = overlay.querySelector('#exportTitleInput');
     const authorInputEl = overlay.querySelector('#exportAuthorInput');
@@ -1926,7 +1926,7 @@ async function openExportModal() {
         downloadZIPBtn.disabled = !anyChapterSelected;
         downloadTXTZipBtn.disabled = !anyChapterSelected;
     };
-    
+
     selectAllChaptersCheckbox.addEventListener('change', () => {
         chapterCheckboxes.forEach(cb => cb.checked = selectAllChaptersCheckbox.checked);
         updateExportButtonState();
@@ -1952,34 +1952,34 @@ async function openExportModal() {
     updateExportButtonState(); // Initial state
 
 
-    let currentCoverDataURL = novel.coverDataURL; 
+    let currentCoverDataURL = novel.coverDataURL;
 
     const updateCoverPreview = (dataURL) => {
-        if (dataURL && (dataURL.startsWith('data:image/png') || dataURL.startsWith('data:image/jpeg') || dataURL.startsWith('data:image/gif'))) { 
+        if (dataURL && (dataURL.startsWith('data:image/png') || dataURL.startsWith('data:image/jpeg') || dataURL.startsWith('data:image/gif'))) {
             coverPreviewImageEl.src = dataURL;
             coverPreviewImageEl.classList.remove('hidden');
             coverPreviewPlaceholderEl.classList.add('hidden');
             removeCoverBtnEl.classList.remove('hidden');
-        } else { 
-            coverPreviewImageEl.src = '#'; 
+        } else {
+            coverPreviewImageEl.src = '#';
             coverPreviewImageEl.classList.add('hidden');
             coverPreviewPlaceholderEl.textContent = 'No cover selected or preview unavailable.';
             coverPreviewPlaceholderEl.classList.remove('hidden');
             removeCoverBtnEl.classList.add('hidden');
-            if (coverFileNameDisplayEl) { 
+            if (coverFileNameDisplayEl) {
                 coverFileNameDisplayEl.textContent = '';
                 coverFileNameDisplayEl.classList.add('hidden');
             }
         }
     };
-    
+
     languageInputEl.addEventListener('change', () => {
         if (languageInputEl.value === 'other') {
             languageOtherInputEl.classList.remove('hidden');
             languageOtherInputEl.focus();
         } else {
             languageOtherInputEl.classList.add('hidden');
-            languageOtherInputEl.value = ''; 
+            languageOtherInputEl.value = '';
         }
     });
     if (languageInputEl.value === 'other') { // Initial check
@@ -1987,12 +1987,12 @@ async function openExportModal() {
     }
 
 
-    updateCoverPreview(currentCoverDataURL); 
+    updateCoverPreview(currentCoverDataURL);
 
     coverInputEl.addEventListener('change', async (event) => {
         const file = event.target.files[0];
         if (coverFileNameDisplayEl) {
-            coverFileNameDisplayEl.textContent = ''; 
+            coverFileNameDisplayEl.textContent = '';
             coverFileNameDisplayEl.classList.add('hidden');
         }
 
@@ -2000,30 +2000,30 @@ async function openExportModal() {
         if (file) {
             if (file.size > 2 * 1024 * 1024) { // 2MB limit
                 await showConfirm({title: "File Too Large", message: "Cover image must be less than 2MB.", okText:"OK"});
-                coverInputEl.value = ''; 
+                coverInputEl.value = '';
                 return;
             }
             if (coverFileNameDisplayEl) {
                 coverFileNameDisplayEl.textContent = file.name;
                 coverFileNameDisplayEl.classList.remove('hidden');
             }
-            if(coverPreviewPlaceholderEl) coverPreviewPlaceholderEl.textContent = "Processing image..."; 
+            if(coverPreviewPlaceholderEl) coverPreviewPlaceholderEl.textContent = "Processing image...";
             if(coverPreviewImageEl) coverPreviewImageEl.classList.add('hidden');
             if(coverPreviewPlaceholderEl) coverPreviewPlaceholderEl.classList.remove('hidden');
             try {
-                currentCoverDataURL = await fileToDataURL(file); 
+                currentCoverDataURL = await fileToDataURL(file);
                 updateCoverPreview(currentCoverDataURL);
             } catch (err) {
                 console.error("Cover processing error:", err, err.stack);
-                currentCoverDataURL = novel.coverDataURL; 
+                currentCoverDataURL = novel.coverDataURL;
                 updateCoverPreview(currentCoverDataURL);
                 await showConfirm({title: "Image Error", message: "Could not process the selected image. Please try a different PNG, JPG, or GIF file.", okText:"OK"});
                 if (coverFileNameDisplayEl) {
-                    coverFileNameDisplayEl.textContent = ''; 
+                    coverFileNameDisplayEl.textContent = '';
                     coverFileNameDisplayEl.classList.add('hidden');
                 }
             }
-        } else { 
+        } else {
             // Revert to novel's current cover if user cancels file dialog or no file selected
             currentCoverDataURL = novel.coverDataURL;
             updateCoverPreview(currentCoverDataURL);
@@ -2032,65 +2032,85 @@ async function openExportModal() {
 
     removeCoverBtnEl.addEventListener('click', () => {
         triggerHapticFeedback([10]);
-        currentCoverDataURL = null; 
-        coverInputEl.value = ''; 
-        updateCoverPreview(null); 
+        currentCoverDataURL = null;
+        coverInputEl.value = '';
+        updateCoverPreview(null);
     });
 
-    const handleNovelMetadataUpdate = async () => {
+    const handleNovelMetadataUpdate = async (context = "details save") => {
+        console.log(`[${context}] Processing novel metadata update...`);
         let changed = false;
         const newTitle = titleInputEl.value.trim() || 'Untitled Novel';
         if (newTitle !== novel.title) {
+            console.log(`[${context}] Title changed: "${novel.title}" -> "${newTitle}"`);
             novel.title = newTitle;
             changed = true;
         }
         const newAuthor = authorInputEl.value.trim();
         if (newAuthor !== novel.author) {
+            console.log(`[${context}] Author changed: "${novel.author}" -> "${newAuthor}"`);
             novel.author = newAuthor;
             changed = true;
         }
 
         let newLanguage = languageInputEl.value;
+        console.log(`[${context}] Language from select: ${newLanguage}`);
         if (newLanguage === 'other') {
             newLanguage = languageOtherInputEl.value.trim();
-            // Validate BCP 47 basic structure (e.g., xx or xx-XX)
-            if (newLanguage && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(newLanguage)) { // Allow empty
-                 await showConfirm({title: "Invalid Language Code", message: "Please enter a valid BCP 47 language code (e.g., 'en', 'fr-CA'), or leave empty to use default.", okText:"OK"});
+            console.log(`[${context}] Other language input: ${newLanguage}`);
+            const bcp47Regex = /^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/;
+            const isValidBCP47 = bcp47Regex.test(newLanguage);
+            console.log(`[${context}] BCP 47 test result for '${newLanguage}': ${isValidBCP47}`);
+
+            if (newLanguage && !isValidBCP47) {
+                 console.log(`[${context}] BCP 47 validation failed for '${newLanguage}'. Prompting user.`);
+                 await showConfirm({title: "Invalid Language Code", message: `The language code "${newLanguage}" is not a valid BCP 47 format (e.g., 'en', 'fr-CA'). Please correct it or leave empty for default.`, okText:"OK"});
                  languageOtherInputEl.focus();
-                 return false; // Indicate validation failure, don't proceed with save/export
+                 console.log(`[${context}] handleNovelMetadataUpdate returning false due to BCP47 validation.`);
+                 return false; // Indicate validation failure
             }
-            if (!newLanguage) newLanguage = novel.language || 'en'; // Default back if empty
+            if (!newLanguage) newLanguage = novel.language || 'en-US'; // Default back if empty
         }
+        console.log(`[${context}] Final language value: ${newLanguage}`);
         if (newLanguage !== novel.language) {
+            console.log(`[${context}] Language changed: "${novel.language}" -> "${newLanguage}"`);
             novel.language = newLanguage;
             changed = true;
         }
 
         if (currentCoverDataURL !== novel.coverDataURL) {
+            console.log(`[${context}] Cover data URL changed.`);
             novel.coverDataURL = currentCoverDataURL;
             changed = true;
         }
 
         if (changed) {
-            touchNovel(novel.id); 
-            saveNovels(novels); 
+            console.log(`[${context}] Metadata changed. Saving novel.`);
+            touchNovel(novel.id);
+            saveNovels(novels);
             document.getElementById(PAGE_TITLE_ID).innerText = novel.title;
             const novelTitleDisplayEl = document.getElementById(NOVEL_TITLE_DISPLAY_ID);
             if (novelTitleDisplayEl) novelTitleDisplayEl.innerText = novel.title;
+        } else {
+            console.log(`[${context}] No metadata changes detected.`);
         }
-        return changed; 
+        console.log(`[${context}] handleNovelMetadataUpdate returning: ${changed}`);
+        return changed; // Returns true if changed, false if no changes OR validation failure.
+                        // It should return true if changed, and a specific value like 'no_change' if no changes.
+                        // Let's adjust: return true if changed, false if not changed AND validation passed, or 'validation_failed'
     };
 
+
     saveDetailsBtn.addEventListener('click', async () => {
-        const detailsChanged = await handleNovelMetadataUpdate();
-        if (detailsChanged !== false) { // Check for explicit false (validation failure)
-            if (detailsChanged) { // True means changed and saved
-                triggerHapticFeedback([20]);
-                updateSaveStatus("Novel details saved ✓", "success");
-            } else { // No changes made
-                updateSaveStatus("No changes to save.", "info", 1500);
-            }
+        const updateResult = await handleNovelMetadataUpdate("details save");
+        if (updateResult === true) { // explicit true means changed and saved
+            triggerHapticFeedback([20]);
+            updateSaveStatus("Novel details saved ✓", "success");
+        } else if (updateResult === false) { // explicit false means no changes made AND validation passed
+            updateSaveStatus("No changes to save.", "info", 1500);
         }
+        // If validation failed, handleNovelMetadataUpdate already showed a confirm and returned false,
+        // so no specific message needed here for that case, user was already prompted.
     });
 
     const getSelectedChapters = () => {
@@ -2119,16 +2139,18 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for EPUB...');
-        const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) {
-            updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
-            return; // Stop if metadata update failed validation
+        const updateSucceeded = await handleNovelMetadataUpdate("EPUB export");
+        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
+            // This check is a bit redundant if handleNovelMetadataUpdate already handles showing the error.
+            // The key is that handleNovelMetadataUpdate returned `false` due to validation.
+            updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
+            return;
         }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
-        let exportLanguage = novel.language || 'en';
-        if (exportLanguage.includes(',')) exportLanguage = exportLanguage.split(',')[0].trim(); 
+        let exportLanguage = novel.language || 'en-US';
+        if (exportLanguage.includes(',')) exportLanguage = exportLanguage.split(',')[0].trim();
 
         const finalCoverDataURL = novel.coverDataURL;
         console.log('Starting EPUB generation process...');
@@ -2141,7 +2163,7 @@ async function openExportModal() {
             const oebpsFolder = zip.folder("OEBPS");
             zip.folder("META-INF").file("container.xml", generateContainerXML());
             console.log('META-INF/container.xml added.');
-            
+
             const cssFolder = oebpsFolder.folder("css");
             cssFolder.file("style.css", generateStyleCSS());
             console.log('OEBPS/css/style.css added.');
@@ -2163,7 +2185,7 @@ async function openExportModal() {
                     console.warn("Could not determine cover image type or invalid data URL.");
                      await showConfirm({title: "Cover Warning", message: "Could not process cover image for EPUB. It might be an unsupported format. EPUB will be generated without cover.", okText: "OK"});
                 }
-            } else if (finalCoverDataURL) { 
+            } else if (finalCoverDataURL) {
                 console.warn("Unsupported cover image type for EPUB (e.g. SVG). Cover will be skipped.");
                 await showConfirm({title: "Cover Warning", message: "Unsupported cover image format. Only PNG, JPG, GIF are reliably supported for EPUB covers. EPUB will be generated without cover.", okText: "OK"});
             }
@@ -2186,9 +2208,9 @@ async function openExportModal() {
             const link = document.createElement('a');
             link.href = URL.createObjectURL(epubBlob);
             link.download = `${sanitizeFilename(exportTitle)}.epub`;
-            document.body.appendChild(link); 
+            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link); 
+            document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
             updateSaveStatus("EPUB exported successfully!", "success");
             triggerHapticFeedback([40]);
@@ -2205,7 +2227,7 @@ async function openExportModal() {
         console.log('Attempting to set "Processing export..." status for MD ZIP');
         updateSaveStatus("Processing export...", "saving");
         console.log('Export function (MD ZIP) entered. Checking libraries...');
-        if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') { 
+        if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') {
             await showConfirm({title: "Export Error", message: "Required library (JSZip or Turndown) is not available for Markdown export. Please check your internet connection or try refreshing.", okText: "OK"});
             updateSaveStatus("Export failed: Library missing (JSZip/Turndown).", "error", 7000);
             return;
@@ -2218,20 +2240,20 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for MD ZIP...');
-        const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) {
-             updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
+        const updateSucceeded = await handleNovelMetadataUpdate("MD ZIP export");
+        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
+             updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
             return;
         }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
-        const exportLanguage = novel.language || 'en';
+        const exportLanguage = novel.language || 'en-US';
         console.log('Starting MD ZIP generation process...');
 
         try {
             const zip = new JSZip();
-            const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' }); 
+            const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
             console.log('JSZip and TurndownService initialized.');
 
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
@@ -2242,13 +2264,13 @@ async function openExportModal() {
 
 
             chaptersToExport.forEach((ch) => {
-                const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`; 
+                const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`;
                 console.log(`Processing chapter for MD: ${base}`);
-                const md = turndownService.turndown(ch.contentHTML || ''); 
+                const md = turndownService.turndown(ch.contentHTML || '');
                 zip.file(`${base}.md`, md);
             });
             console.log('Generating MD ZIP blob...');
-            const blob = await zip.generateAsync({ type: 'blob' }); 
+            const blob = await zip.generateAsync({ type: 'blob' });
             console.log('MD ZIP blob generated. Triggering download...');
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -2256,7 +2278,7 @@ async function openExportModal() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            URL.revokeObjectURL(link.href); 
+            URL.revokeObjectURL(link.href);
             updateSaveStatus("ZIP (MD) exported successfully!", "success");
             triggerHapticFeedback([40]);
         } catch (error) {
@@ -2284,21 +2306,21 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for TXT ZIP...');
-        const updateSucceeded = await handleNovelMetadataUpdate(); 
-        if (updateSucceeded === false) {
-            updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
+        const updateSucceeded = await handleNovelMetadataUpdate("TXT ZIP export");
+        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
+            updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
             return;
         }
 
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
-        const exportLanguage = novel.language || 'en';
+        const exportLanguage = novel.language || 'en-US';
         console.log('Starting TXT ZIP generation process...');
 
         try {
             const zip = new JSZip();
             console.log('JSZip initialized for TXT.');
-            
+
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
             const updatedDate = novel.updatedAt ? new Date(novel.updatedAt).toLocaleDateString() : 'N/A';
             const metadataContent = `Title: ${exportTitle}\nAuthor: ${exportAuthor}\nLanguage: ${exportLanguage}\nCreated: ${createdDate}\nLast Updated: ${updatedDate}\nExported Chapters: ${chaptersToExport.length} (out of ${novel.chapters.length} total)\n---\n`;
@@ -2308,15 +2330,15 @@ async function openExportModal() {
             chaptersToExport.forEach((ch) => {
                 const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`;
                 console.log(`Processing chapter for TXT: ${base}`);
-                const txt = htmlToPlainText(ch.contentHTML || ''); 
-                zip.file(`${base}.txt`, `Chapter ${ch.order}: ${ch.title || 'Untitled Chapter'}\n\n${txt}`); 
+                const txt = htmlToPlainText(ch.contentHTML || '');
+                zip.file(`${base}.txt`, `Chapter ${ch.order}: ${ch.title || 'Untitled Chapter'}\n\n${txt}`);
             });
             console.log('Generating TXT ZIP blob...');
             const blob = await zip.generateAsync({ type: 'blob' });
             console.log('TXT ZIP blob generated. Triggering download...');
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `${sanitizeFilename(exportTitle)}_PlainText.zip`; 
+            link.download = `${sanitizeFilename(exportTitle)}_PlainText.zip`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -2333,39 +2355,39 @@ async function openExportModal() {
 
 
     const modalElement = overlay.querySelector('.modal');
-    const focusableElements = Array.from(modalElement.querySelectorAll('button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null); 
-    const firstFocusableElement = focusableElements[0] || titleInputEl; 
+    const focusableElements = Array.from(modalElement.querySelectorAll('button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+    const firstFocusableElement = focusableElements[0] || titleInputEl;
     const lastFocusableElement = focusableElements[focusableElements.length - 1];
-    
-    if(firstFocusableElement) firstFocusableElement.focus(); 
+
+    if(firstFocusableElement) firstFocusableElement.focus();
 
 
     const closeBtn = overlay.querySelector('#closeExportBtn');
     const handleClose = () => {
         triggerHapticFeedback([10]);
-        overlay.classList.remove('active'); 
+        overlay.classList.remove('active');
         document.body.classList.remove('body-modal-open');
         setTimeout(() => {
-            if (document.body.contains(overlay)) { 
+            if (document.body.contains(overlay)) {
                  document.body.removeChild(overlay);
             }
-            if (triggeringElement && typeof triggeringElement.focus === 'function') { 
+            if (triggeringElement && typeof triggeringElement.focus === 'function') {
                 triggeringElement.focus();
             }
-        }, 200); 
+        }, 200);
     };
 
     const handleKeyDown = (ev) => {
         if (ev.key === 'Escape') {
             handleClose();
-        } else if (ev.key === 'Tab') { 
+        } else if (ev.key === 'Tab') {
             if (!focusableElements.length) { ev.preventDefault(); return; }
-            if (ev.shiftKey) { 
+            if (ev.shiftKey) {
                 if (document.activeElement === firstFocusableElement) {
                     ev.preventDefault();
                     lastFocusableElement?.focus();
                 }
-            } else { 
+            } else {
                 if (document.activeElement === lastFocusableElement) {
                     ev.preventDefault();
                     firstFocusableElement?.focus();
@@ -2375,8 +2397,8 @@ async function openExportModal() {
     };
 
     closeBtn?.addEventListener('click', handleClose);
-    overlay.addEventListener('click', ev => { if (ev.target === overlay) handleClose(); }); 
-    overlay.addEventListener('keydown', handleKeyDown); 
+    overlay.addEventListener('click', ev => { if (ev.target === overlay) handleClose(); });
+    overlay.addEventListener('keydown', handleKeyDown);
 }
 
 // -------------------- SINGLE CHAPTER EXPORT --------------------
@@ -2410,12 +2432,12 @@ function showSingleChapterExportOptions(chapter) {
     const mdBtn = overlay.querySelector('#exportChapterMD');
     const txtBtn = overlay.querySelector('#exportChapterTXT');
     const cancelBtn = overlay.querySelector('#exportChapterCancel');
-    
+
     const focusableElements = Array.from(modalElement.querySelectorAll('button')).filter(el => el.offsetParent !== null);
     const firstFocusableElement = focusableElements[0] || mdBtn;
     const lastFocusableElement = focusableElements[focusableElements.length - 1] || cancelBtn;
-    
-    firstFocusableElement?.focus(); 
+
+    firstFocusableElement?.focus();
 
     const handleFormatSelection = (format) => {
       triggerHapticFeedback([20]);
@@ -2468,7 +2490,7 @@ function showSingleChapterExportOptions(chapter) {
          if (triggeringElement && typeof triggeringElement.focus === 'function') {
             triggeringElement.focus();
           }
-      }, 200); 
+      }, 200);
     }
   });
 }
@@ -2517,7 +2539,7 @@ async function handleSingleChapterExport(chapter) {
 // -------------------- TOUCH & GESTURE SETUP --------------------
 function setupGestures() {
   const appEl = document.getElementById(APP_ELEMENT_ID);
-  if (appEl && !hammerInstances.app) { 
+  if (appEl && !hammerInstances.app) {
     hammerInstances.app = new Hammer(appEl, { touchAction: 'pan-y' }); // Allow vertical scroll
     hammerInstances.app.on('swiperight', (ev) => {
       // Only trigger if swipe is primarily horizontal and starts near left edge
@@ -2552,12 +2574,12 @@ function destroyEditorGestures() {
 
 
 function setupEditorGestures(targetElement) {
-    destroyEditorGestures(); 
+    destroyEditorGestures();
 
     if (targetElement) {
         hammerInstances.editor = new Hammer(targetElement, { recognizers: [[Hammer.Pinch, { enable: true }]] });
         let initialScaleOnPinchStart = appSettings.editorScale;
-        
+
         hammerInstances.editor.on('pinchstart', () => {
              initialScaleOnPinchStart = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--editor-font-scale')) || 1;
         });
@@ -2574,50 +2596,50 @@ function setupEditorGestures(targetElement) {
 
 function setupChapterListGestures() {
     const chapterListEl = document.getElementById(CHAPTER_LIST_ID);
-    if (chapterListEl && !hammerInstances.chapterList) { 
+    if (chapterListEl && !hammerInstances.chapterList) {
         hammerInstances.chapterList = new Hammer(chapterListEl);
         hammerInstances.chapterList.get('press').set({ time: 500 }); // Standard press time
         hammerInstances.chapterList.on('press', async ev => {
             const li = ev.target.closest('li[data-chapter-id]');
-            if (!li || !currentNovelId) return; 
+            if (!li || !currentNovelId) return;
             const chapId = li.dataset.chapterId;
             const novel = novels.find(n => n.id === currentNovelId);
             if (!novel) return;
             const chap = novel.chapters.find(c => c.id === chapId);
             if (!chap) return;
-            closeActiveContextMenu(); 
-            showChapterContextMenu(chap, ev.center.x, ev.center.y); 
+            closeActiveContextMenu();
+            showChapterContextMenu(chap, ev.center.x, ev.center.y);
         });
-    } else if (!chapterListEl && hammerInstances.chapterList) { 
+    } else if (!chapterListEl && hammerInstances.chapterList) {
         hammerInstances.chapterList.destroy();
         hammerInstances.chapterList = null;
     }
 }
 
 // -------------------- CONTEXT MENU FOR CHAPTER --------------------
-let activeContextMenu = null; 
+let activeContextMenu = null;
 
 function closeActiveContextMenu() {
     if (activeContextMenu) {
         const parent = activeContextMenu.parentNode;
-        if (parent && parent.contains(activeContextMenu)) { 
+        if (parent && parent.contains(activeContextMenu)) {
             parent.removeChild(activeContextMenu);
         }
-        activeContextMenu = null; 
+        activeContextMenu = null;
     }
 }
 
 async function showChapterContextMenu(chapter, x, y) {
-  closeActiveContextMenu(); 
+  closeActiveContextMenu();
   const novel = novels.find(n => n.id === currentNovelId);
   if (!novel) return;
-  triggerHapticFeedback([10]); 
+  triggerHapticFeedback([10]);
 
   activeContextMenu = document.createElement('div');
-  activeContextMenu.id = 'chapterContextMenu'; 
+  activeContextMenu.id = 'chapterContextMenu';
   activeContextMenu.setAttribute('role', 'menu');
   activeContextMenu.setAttribute('aria-label', `Actions for chapter ${chapter.title}`);
-  
+
   const sortedChapters = novel.chapters.slice().sort((a, b) => a.order - b.order);
   const chapterIndex = sortedChapters.findIndex(c => c.id === chapter.id);
   const isFirstChapter = chapterIndex === 0;
@@ -2644,33 +2666,33 @@ async function showChapterContextMenu(chapter, x, y) {
 
   activeContextMenu.style.left = `${Math.min(x, window.innerWidth - activeContextMenu.offsetWidth - 10)}px`;
   activeContextMenu.style.top = `${Math.min(y, window.innerHeight - activeContextMenu.offsetHeight - 10)}px`;
-  
+
   const firstFocusableItem = activeContextMenu.querySelector('[role="menuitem"][tabindex="0"]');
-  firstFocusableItem?.focus(); 
+  firstFocusableItem?.focus();
 
   const handleMenuAction = async (action) => {
-    triggerHapticFeedback([10]); 
+    triggerHapticFeedback([10]);
     const currentSortedChapters = novel.chapters.slice().sort((a, b) => a.order - b.order);
     const idxInSorted = currentSortedChapters.findIndex(c => c.id === chapter.id);
     // Find actual index in novel.chapters (unsorted by render, but sort key is `order`)
     const actualIdx = novel.chapters.findIndex(c => c.id === chapter.id);
 
 
-    let chapterToFocusAfterMove = null; 
+    let chapterToFocusAfterMove = null;
 
     switch (action) {
       case 'rename':
         const newTitle = await showPrompt({ title: 'Rename Chapter', initialValue: chapter.title, placeholder: 'Enter new chapter title...' });
-        if (newTitle !== null && newTitle.trim() !== chapter.title) { 
+        if (newTitle !== null && newTitle.trim() !== chapter.title) {
           chapter.title = newTitle.trim() || 'Untitled Chapter';
           chapter.updatedAt = new Date().toISOString();
           touchNovel(novel.id);
           saveNovels(novels);
           updateSaveStatus("Chapter renamed", "success");
           triggerHapticFeedback([20]);
-          renderChapterList(novel); 
+          renderChapterList(novel);
           if (currentChapterId === chapter.id && document.getElementById(ACTIVE_CHAPTER_TITLE_DISPLAY_ID)) {
-            document.getElementById(ACTIVE_CHAPTER_TITLE_DISPLAY_ID).textContent = chapter.title; 
+            document.getElementById(ACTIVE_CHAPTER_TITLE_DISPLAY_ID).textContent = chapter.title;
           }
         }
         break;
@@ -2682,15 +2704,15 @@ async function showChapterContextMenu(chapter, x, y) {
         if (confirmed) {
           triggerHapticFeedback([40]);
           const chapterWasActive = currentChapterId === chapter.id;
-          if(chapterWasActive) isEditorDirty = false; 
-          novel.chapters.splice(actualIdx, 1); 
-          renumberChapters(novel.chapters); 
+          if(chapterWasActive) isEditorDirty = false;
+          novel.chapters.splice(actualIdx, 1);
+          renumberChapters(novel.chapters);
           touchNovel(novel.id);
           saveNovels(novels);
           updateSaveStatus("Chapter deleted", "success");
-          renderChapterList(novel); 
-          handlePostChapterDeletionFocus(); 
-          if (chapterWasActive) { 
+          renderChapterList(novel);
+          handlePostChapterDeletionFocus();
+          if (chapterWasActive) {
             currentChapterId = novel.chapters.sort((a,b) => a.order - b.order)[0]?.id || null;
             updateURL(novel.id, currentChapterId);
             if (currentChapterId) {
@@ -2702,7 +2724,7 @@ async function showChapterContextMenu(chapter, x, y) {
         }
         break;
       case 'moveUp':
-        if (actualIdx > 0 && chapter.order > 1) { 
+        if (actualIdx > 0 && chapter.order > 1) {
           triggerHapticFeedback([20,30,20]);
           const chapterToSwapWithOrder = novel.chapters[actualIdx].order - 1;
           const swapIdx = novel.chapters.findIndex(c => c.order === chapterToSwapWithOrder);
@@ -2716,7 +2738,7 @@ async function showChapterContextMenu(chapter, x, y) {
         }
         break;
       case 'moveDown':
-         if (actualIdx < novel.chapters.length - 1 && chapter.order < novel.chapters.length) { 
+         if (actualIdx < novel.chapters.length - 1 && chapter.order < novel.chapters.length) {
           triggerHapticFeedback([20,30,20]);
           const chapterToSwapWithOrder = novel.chapters[actualIdx].order + 1;
           const swapIdx = novel.chapters.findIndex(c => c.order === chapterToSwapWithOrder);
@@ -2730,24 +2752,24 @@ async function showChapterContextMenu(chapter, x, y) {
         }
         break;
     }
-    closeActiveContextMenu(); 
-    if (chapterToFocusAfterMove) { 
+    closeActiveContextMenu();
+    if (chapterToFocusAfterMove) {
         const listEl = document.getElementById(CHAPTER_LIST_ID);
         const movedLi = listEl?.querySelector(`li[data-chapter-id="${chapterToFocusAfterMove}"]`);
         if (movedLi) movedLi.focus();
     }
   };
-  
+
   activeContextMenu.addEventListener('click', ev => {
       const targetItem = ev.target.closest('.menu-item');
-      if (targetItem && !targetItem.classList.contains('menu-item-disabled')) { 
+      if (targetItem && !targetItem.classList.contains('menu-item-disabled')) {
           handleMenuAction(targetItem.dataset.action);
       }
   });
-  activeContextMenu.addEventListener('keydown', ev => { 
+  activeContextMenu.addEventListener('keydown', ev => {
       const targetItem = ev.target.closest('.menu-item');
       if (targetItem && (ev.key === 'Enter' || ev.key === ' ') && !targetItem.classList.contains('menu-item-disabled')) {
-          ev.preventDefault(); 
+          ev.preventDefault();
           handleMenuAction(targetItem.dataset.action);
       } else if (ev.key === 'Escape') {
           closeActiveContextMenu();
@@ -2756,11 +2778,11 @@ async function showChapterContextMenu(chapter, x, y) {
           originalTrigger?.focus();
       } else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
           ev.preventDefault();
-          const items = Array.from(activeContextMenu.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')); 
+          const items = Array.from(activeContextMenu.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])'));
           let currentFocusIndex = items.indexOf(document.activeElement);
           if (ev.key === 'ArrowDown') {
               currentFocusIndex = (currentFocusIndex + 1) % items.length;
-          } else { 
+          } else {
               currentFocusIndex = (currentFocusIndex - 1 + items.length) % items.length;
           }
           if(items[currentFocusIndex]) items[currentFocusIndex].focus();
@@ -2768,12 +2790,12 @@ async function showChapterContextMenu(chapter, x, y) {
   });
 
   const clickOutsideListener = (ev) => {
-    if (activeContextMenu && !activeContextMenu.contains(ev.target)) { 
+    if (activeContextMenu && !activeContextMenu.contains(ev.target)) {
       closeActiveContextMenu();
-      document.removeEventListener('click', clickOutsideListener, true); 
+      document.removeEventListener('click', clickOutsideListener, true);
     }
   };
-  setTimeout(() => document.addEventListener('click', clickOutsideListener, true), 0); 
+  setTimeout(() => document.addEventListener('click', clickOutsideListener, true), 0);
 }
 
 function handlePostChapterDeletionFocus() {
@@ -2786,7 +2808,7 @@ function handlePostChapterDeletionFocus() {
         if (activeChapterLi) {
             activeChapterLi.tabIndex = 0; // Ensure it's focusable
             activeChapterLi.focus();
-            return; 
+            return;
         }
     }
     // If no current chapter, or active chapter not found (e.g., list is empty after delete)
