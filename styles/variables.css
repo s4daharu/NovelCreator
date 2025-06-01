@@ -1,0 +1,76 @@
+:root {
+  /* Light Theme (Default if no .dark class on html) */
+  --bg: #FFFFFF;
+  --surface: #F5F5F5; /* Slightly off-white for surfaces */
+  --onSurface: #1F1F1F; /* Dark text on light surfaces */
+  --onBackground: #121212; /* Dark text on light background */
+  --accent: #6200EE; /* Material Purple */
+  --accent-variant: #3700B3; /* Darker purple */
+  --secondary: #03DAC6; /* Material Teal */
+  --error: #B00020; /* Material Red */
+
+  --text-primary: #1F1F1F;
+  --text-secondary: #555555; /* Darker gray for secondary text */
+  --border-color: #DCDCDC; /* Light gray for borders */
+  --input-bg: #EEEEEE; /* Light gray for input backgrounds */
+
+  /* RGB versions for use in rgba() - Light Theme */
+  --bg-rgb: 255, 255, 255;
+  --surface-rgb: 245, 245, 245;
+  --onSurface-rgb: 31, 31, 31;
+  --onBackground-rgb: 18, 18, 18;
+  --accent-rgb: 98, 0, 238;
+  --secondary-rgb: 3, 218, 198;
+  --error-rgb: 176, 0, 32;
+  --text-primary-rgb: 31, 31, 31;
+  --text-secondary-rgb: 85, 85, 85;
+
+
+  /* Common variables */
+  --header-height: 56px;
+  --toolbar-height: 48px;
+  --editor-font-scale: 1;
+}
+
+html.dark {
+  /* Dark Theme Overrides */
+  --bg: #121212;
+  --surface: #1E1E1E;
+  --onSurface: #E0E0E0;
+  --onBackground: #E0E0E0;
+  --accent: #BB86FC; /* Material Dark Purple */
+  --accent-variant: #3700B3; /* This was from original, might need dark specific if used */
+  --secondary: #03DAC6; /* Teal, often works for both themes */
+  --error: #CF6679; /* Material Dark Error */
+
+  --text-primary: #E0E0E0;
+  --text-secondary: #A0A0A0;
+  --border-color: #333333;
+  --input-bg: #2A2A2A;
+
+  /* RGB versions for use in rgba() - Dark Theme */
+  --bg-rgb: 18, 18, 18;
+  --surface-rgb: 30, 30, 30;
+  --onSurface-rgb: 224, 224, 224;
+  --onBackground-rgb: 224, 224, 224;
+  --accent-rgb: 187, 134, 252;
+  --secondary-rgb: 3, 218, 198; /* Can remain same or be specific */
+  --error-rgb: 207, 102, 121;
+  --text-primary-rgb: 224, 224, 224;
+  --text-secondary-rgb: 160, 160, 160;
+}
+
+/* Base styles that use the variables */
+html, body {
+  background-color: var(--bg);
+  color: var(--onBackground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  line-height: 1.6;
+}
+
+/* Improve focus visibility for accessibility, using accent color */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.3);
+}

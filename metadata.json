@@ -1,0 +1,6 @@
+{
+  "name": "Copy of Novel Creator V1.3",
+  "description": "A web app to write novels with chapter management, rich-text editing, and export options (EPUB, ZIP). Mobile-first and dark-mode only.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}

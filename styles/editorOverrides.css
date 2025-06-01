@@ -1,0 +1,196 @@
+/* CKEditor container styling - theme aware */
+
+.ck.ck-editor.ck-editor--classic {
+  border-radius: 0;
+}
+
+.ck.ck-editor__top .ck-toolbar {
+  background-color: var(--surface) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  box-shadow: none !important;
+}
+.ck.ck-toolbar.ck-toolbar_grouping > .ck-toolbar__items {
+  flex-wrap: wrap;
+}
+
+.ck.ck-editor--classic .ck-editor__main {
+  flex-grow: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.ck.ck-editor__editable_inline {
+  background-color: var(--bg) !important; /* Use important if CKEditor is too specific */
+  color: var(--onSurface) !important;
+  height: 100%;
+  font-size: calc(1rem * var(--editor-font-scale));
+  line-height: 1.7;
+  padding: 1rem 1.5rem;
+  border: none;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  overflow-y: auto;
+  caret-color: var(--accent);
+}
+
+.ck.ck-editor__editable_inline.ck-placeholder::before,
+.ck-placeholder {
+  color: var(--text-secondary) !important;
+  opacity: 0.7;
+}
+
+.ck.ck-balloon-panel {
+  background-color: var(--surface) !important;
+  color: var(--onSurface) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; /* Universal shadow */
+  z-index: 100;
+}
+html.dark .ck.ck-balloon-panel {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important; /* Darker shadow for dark theme */
+}
+
+
+.ck.ck-button {
+  color: var(--onSurface) !important;
+  background-color: transparent !important;
+  cursor: pointer;
+}
+
+.ck.ck-button:hover,
+.ck.ck-button.ck-on {
+  background-color: rgba(var(--accent-rgb), 0.15) !important;
+  color: var(--accent) !important;
+  outline: none !important;
+}
+.ck.ck-button.ck-on {
+  background-color: rgba(var(--accent-rgb), 0.25) !important;
+}
+
+.ck.ck-button.ck-disabled:hover {
+  background-color: transparent !important;
+}
+
+.ck.ck-dropdown__panel {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; /* Universal shadow */
+}
+html.dark .ck.ck-dropdown__panel {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25) !important;
+}
+
+
+.ck.ck-list__item .ck-button:hover {
+  background-color: rgba(var(--accent-rgb), 0.15) !important;
+  color: var(--accent) !important;
+}
+
+.ck.ck-icon, .ck.ck-icon * {
+  color: var(--onSurface) !important; /* Default icon color from theme */
+}
+/* For light theme, icons on hover/on might need to be darker if accent is light */
+html:not(.dark) .ck.ck-button:hover .ck-icon, 
+html:not(.dark) .ck.ck-button:hover .ck-icon *,
+html:not(.dark) .ck.ck-button.ck-on .ck-icon, 
+html:not(.dark) .ck.ck-button.ck-on .ck-icon * {
+  color: var(--accent) !important; 
+}
+html.dark .ck.ck-button:hover .ck-icon, 
+html.dark .ck.ck-button:hover .ck-icon *,
+html.dark .ck.ck-button.ck-on .ck-icon, 
+html.dark .ck.ck-button.ck-on .ck-icon * {
+  color: var(--accent) !important;
+}
+
+
+.ck.ck-form-header {
+    background-color: var(--surface) !important;
+    color: var(--onSurface) !important;
+}
+.ck.ck-input {
+    background-color: var(--input-bg) !important;
+    color: var(--onSurface) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.ck.ck-input:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+.ck.ck-labeled-field-view__input_textarea {
+    background-color: var(--input-bg) !important;
+    color: var(--onSurface) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.ck.ck-find-and-replace-form {
+    background-color: var(--surface) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+html.dark .ck.ck-find-and-replace-form {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+.ck.ck-find-and-replace-form .ck-input-text {
+    background-color: var(--input-bg) !important;
+    color: var(--onSurface) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.ck.ck-find-and-replace-form .ck-form__header {
+    color: var(--onSurface) !important;
+}
+
+.ck.ck-contextual-balloon {
+    background-color: var(--surface) !important;
+    color: var(--onSurface) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+html.dark .ck.ck-contextual-balloon {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+
+.ck-editor__editable ::selection {
+  background-color: rgba(var(--accent-rgb), 0.3);
+  color: var(--onSurface); /* Ensure text is readable, might need adjustment based on accent */
+}
+.ck-editor__editable.ck-focused ::selection {
+  background-color: rgba(var(--accent-rgb), 0.4);
+}
+
+/* Code block styling */
+.ck-content pre {
+  background-color: #282c34; /* Common dark bg, can be themed if desired */
+  color: #abb2bf;
+  padding: 1em;
+  border-radius: 4px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid var(--border-color);
+}
+html:not(.dark) .ck-content pre { /* Example light theme for code blocks */
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.ck-content code { /* Inline code */
+  background-color: rgba(var(--accent-rgb), 0.1);
+  padding: .1em .3em;
+  border-radius: 3px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+  color: var(--accent); /* Make inline code use accent color text */
+}
+.ck-content pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit; /* Inherit from <pre> for code within blocks */
+}
