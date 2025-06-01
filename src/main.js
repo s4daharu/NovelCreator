@@ -1717,6 +1717,16 @@ function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, ch
         coverGuideReference = `<guide><reference type="cover" title="Cover" href="cover.xhtml"/></guide>`;
     }
 
+    let dateForModification;
+    if (novel.updatedAt) {
+      dateForModification = new Date(novel.updatedAt);
+    } else if (novel.createdAt) {
+      dateForModification = new Date(novel.createdAt);
+    } else {
+      dateForModification = new Date();
+    }
+    const modificationDateString = dateForModification.toISOString().split('T')[0];
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="2.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
@@ -1725,7 +1735,7 @@ function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, ch
     <dc:creator opf:role="aut">${exportAuthor}</dc:creator>
     <dc:language>${exportLanguage}</dc:language>
     <dc:publisher>Novel Creator App</dc:publisher>
-    <dc:date opf:event="modification">${(novel.updatedAt || novel.createdAt || new Date()).toISOString().split('T')[0]}</dc:date>
+    <dc:date opf:event="modification">${modificationDateString}</dc:date>
     <meta name="generator" content="Novel Creator App V (check metadata.json)" />
     ${coverMetaTag}
   </metadata>
@@ -2094,23 +2104,34 @@ async function openExportModal() {
         } else {
             console.log(`[${context}] No metadata changes detected.`);
         }
-        console.log(`[${context}] handleNovelMetadataUpdate returning: ${changed}`);
-        return changed; // Returns true if changed, false if no changes OR validation failure.
-                        // It should return true if changed, and a specific value like 'no_change' if no changes.
-                        // Let's adjust: return true if changed, false if not changed AND validation passed, or 'validation_failed'
+        // Return true if processing should continue (validation passed), false otherwise
+        return !(newLanguage === languageOtherInputEl.value.trim() && newLanguage && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(newLanguage));
     };
 
 
     saveDetailsBtn.addEventListener('click', async () => {
         const updateResult = await handleNovelMetadataUpdate("details save");
-        if (updateResult === true) { // explicit true means changed and saved
-            triggerHapticFeedback([20]);
-            updateSaveStatus("Novel details saved ✓", "success");
-        } else if (updateResult === false) { // explicit false means no changes made AND validation passed
-            updateSaveStatus("No changes to save.", "info", 1500);
+        // Check if handleNovelMetadataUpdate returned true (meaning validation passed and potentially changes were saved)
+        // or false (meaning validation failed).
+        const newTitle = titleInputEl.value.trim() || 'Untitled Novel';
+        const newAuthor = authorInputEl.value.trim();
+        let newLanguage = languageInputEl.value;
+        if (newLanguage === 'other') newLanguage = languageOtherInputEl.value.trim();
+
+        const metadataActuallyChanged = newTitle !== novel.title ||
+                                     newAuthor !== novel.author ||
+                                     newLanguage !== novel.language ||
+                                     currentCoverDataURL !== novel.coverDataURL;
+
+        if (updateResult === true) { // Validation passed
+            if (metadataActuallyChanged) { // Check if anything was actually different to save
+                triggerHapticFeedback([20]);
+                updateSaveStatus("Novel details saved ✓", "success");
+            } else {
+                updateSaveStatus("No changes to save.", "info", 1500);
+            }
         }
-        // If validation failed, handleNovelMetadataUpdate already showed a confirm and returned false,
-        // so no specific message needed here for that case, user was already prompted.
+        // If updateResult is false, it means validation failed, and showConfirm was already called.
     });
 
     const getSelectedChapters = () => {
@@ -2139,11 +2160,9 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for EPUB...');
-        const updateSucceeded = await handleNovelMetadataUpdate("EPUB export");
-        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
-            // This check is a bit redundant if handleNovelMetadataUpdate already handles showing the error.
-            // The key is that handleNovelMetadataUpdate returned `false` due to validation.
-            updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
+        const metadataUpdateCanProceed = await handleNovelMetadataUpdate("EPUB export");
+        if (!metadataUpdateCanProceed) {
+            updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
             return;
         }
 
@@ -2240,9 +2259,9 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for MD ZIP...');
-        const updateSucceeded = await handleNovelMetadataUpdate("MD ZIP export");
-        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
-             updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
+        const metadataUpdateCanProceed = await handleNovelMetadataUpdate("MD ZIP export");
+         if (!metadataUpdateCanProceed) {
+             updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
             return;
         }
 
@@ -2306,9 +2325,9 @@ async function openExportModal() {
             return;
         }
         console.log('Handling novel metadata update for TXT ZIP...');
-        const updateSucceeded = await handleNovelMetadataUpdate("TXT ZIP export");
-        if (updateSucceeded === false && languageInputEl.value === 'other' && languageOtherInputEl.value.trim() && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(languageOtherInputEl.value.trim())) {
-            updateSaveStatus("Export cancelled: Invalid metadata (BCP 47).", "warning", 7000);
+        const metadataUpdateCanProceed = await handleNovelMetadataUpdate("TXT ZIP export");
+        if (!metadataUpdateCanProceed) {
+            updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
             return;
         }
 
