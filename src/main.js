@@ -1718,14 +1718,14 @@ function generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, ch
     }
 
     let dateForModification;
-    if (novel.updatedAt) {
-      dateForModification = new Date(novel.updatedAt);
-    } else if (novel.createdAt) {
-      dateForModification = new Date(novel.createdAt);
+    let dateSource = novel.updatedAt || novel.createdAt;
+    if (dateSource) {
+        dateForModification = new Date(dateSource);
     } else {
-      dateForModification = new Date();
+        dateForModification = new Date();
     }
     const modificationDateString = dateForModification.toISOString().split('T')[0];
+
 
     return `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="2.0">
@@ -2048,61 +2048,61 @@ async function openExportModal() {
     });
 
     const handleNovelMetadataUpdate = async (context = "details save") => {
-        console.log(`[${context}] Processing novel metadata update...`);
+        // console.log(`[${context}] Processing novel metadata update...`);
         let changed = false;
         const newTitle = titleInputEl.value.trim() || 'Untitled Novel';
         if (newTitle !== novel.title) {
-            console.log(`[${context}] Title changed: "${novel.title}" -> "${newTitle}"`);
+            // console.log(`[${context}] Title changed: "${novel.title}" -> "${newTitle}"`);
             novel.title = newTitle;
             changed = true;
         }
         const newAuthor = authorInputEl.value.trim();
         if (newAuthor !== novel.author) {
-            console.log(`[${context}] Author changed: "${novel.author}" -> "${newAuthor}"`);
+            // console.log(`[${context}] Author changed: "${novel.author}" -> "${newAuthor}"`);
             novel.author = newAuthor;
             changed = true;
         }
 
         let newLanguage = languageInputEl.value;
-        console.log(`[${context}] Language from select: ${newLanguage}`);
+        // console.log(`[${context}] Language from select: ${newLanguage}`);
         if (newLanguage === 'other') {
             newLanguage = languageOtherInputEl.value.trim();
-            console.log(`[${context}] Other language input: ${newLanguage}`);
+            // console.log(`[${context}] Other language input: ${newLanguage}`);
             const bcp47Regex = /^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/;
             const isValidBCP47 = bcp47Regex.test(newLanguage);
-            console.log(`[${context}] BCP 47 test result for '${newLanguage}': ${isValidBCP47}`);
+            // console.log(`[${context}] BCP 47 test result for '${newLanguage}': ${isValidBCP47}`);
 
             if (newLanguage && !isValidBCP47) {
-                 console.log(`[${context}] BCP 47 validation failed for '${newLanguage}'. Prompting user.`);
+                //  console.log(`[${context}] BCP 47 validation failed for '${newLanguage}'. Prompting user.`);
                  await showConfirm({title: "Invalid Language Code", message: `The language code "${newLanguage}" is not a valid BCP 47 format (e.g., 'en', 'fr-CA'). Please correct it or leave empty for default.`, okText:"OK"});
                  languageOtherInputEl.focus();
-                 console.log(`[${context}] handleNovelMetadataUpdate returning false due to BCP47 validation.`);
+                //  console.log(`[${context}] handleNovelMetadataUpdate returning false due to BCP47 validation.`);
                  return false; // Indicate validation failure
             }
             if (!newLanguage) newLanguage = novel.language || 'en-US'; // Default back if empty
         }
-        console.log(`[${context}] Final language value: ${newLanguage}`);
+        // console.log(`[${context}] Final language value: ${newLanguage}`);
         if (newLanguage !== novel.language) {
-            console.log(`[${context}] Language changed: "${novel.language}" -> "${newLanguage}"`);
+            // console.log(`[${context}] Language changed: "${novel.language}" -> "${newLanguage}"`);
             novel.language = newLanguage;
             changed = true;
         }
 
         if (currentCoverDataURL !== novel.coverDataURL) {
-            console.log(`[${context}] Cover data URL changed.`);
+            // console.log(`[${context}] Cover data URL changed.`);
             novel.coverDataURL = currentCoverDataURL;
             changed = true;
         }
 
         if (changed) {
-            console.log(`[${context}] Metadata changed. Saving novel.`);
+            // console.log(`[${context}] Metadata changed. Saving novel.`);
             touchNovel(novel.id);
             saveNovels(novels);
             document.getElementById(PAGE_TITLE_ID).innerText = novel.title;
             const novelTitleDisplayEl = document.getElementById(NOVEL_TITLE_DISPLAY_ID);
             if (novelTitleDisplayEl) novelTitleDisplayEl.innerText = novel.title;
         } else {
-            console.log(`[${context}] No metadata changes detected.`);
+            // console.log(`[${context}] No metadata changes detected.`);
         }
         // Return true if processing should continue (validation passed), false otherwise
         return !(newLanguage === languageOtherInputEl.value.trim() && newLanguage && !/^[a-z]{2,3}(?:-[A-Z]{2,3})?(?:-[A-Za-z0-9]+)*$/.test(newLanguage));
@@ -2143,23 +2143,23 @@ async function openExportModal() {
 
 
     downloadEPUBBtn.addEventListener('click', async () => {
-        console.log('Download EPUB button clicked');
-        console.log('Attempting to set "Processing export..." status for EPUB');
+        // console.log('Download EPUB button clicked');
+        // console.log('Attempting to set "Processing export..." status for EPUB');
         updateSaveStatus("Processing export...", "saving");
-        console.log('Export function (EPUB) entered. Checking libraries...');
+        // console.log('Export function (EPUB) entered. Checking libraries...');
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "EPUB generation library (JSZip) is not available. Please check your internet connection or try refreshing.", okText: "OK"});
             updateSaveStatus("Export failed: JSZip library missing.", "error", 7000);
             return;
         }
-        console.log('Getting selected chapters for EPUB...');
+        // console.log('Getting selected chapters for EPUB...');
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
             updateSaveStatus("Export failed: No chapters selected.", "error", 7000);
             return;
         }
-        console.log('Handling novel metadata update for EPUB...');
+        // console.log('Handling novel metadata update for EPUB...');
         const metadataUpdateCanProceed = await handleNovelMetadataUpdate("EPUB export");
         if (!metadataUpdateCanProceed) {
             updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
@@ -2172,20 +2172,20 @@ async function openExportModal() {
         if (exportLanguage.includes(',')) exportLanguage = exportLanguage.split(',')[0].trim();
 
         const finalCoverDataURL = novel.coverDataURL;
-        console.log('Starting EPUB generation process...');
+        // console.log('Starting EPUB generation process...');
 
         try {
             const zip = new JSZip();
             zip.file("mimetype", "application/epub+zip", { compression: "STORE" });
-            console.log('Mimetype added.');
+            // console.log('Mimetype added.');
 
             const oebpsFolder = zip.folder("OEBPS");
             zip.folder("META-INF").file("container.xml", generateContainerXML());
-            console.log('META-INF/container.xml added.');
+            // console.log('META-INF/container.xml added.');
 
             const cssFolder = oebpsFolder.folder("css");
             cssFolder.file("style.css", generateStyleCSS());
-            console.log('OEBPS/css/style.css added.');
+            // console.log('OEBPS/css/style.css added.');
 
             let coverMetaInfo = null;
             if (finalCoverDataURL && (finalCoverDataURL.startsWith('data:image/png') || finalCoverDataURL.startsWith('data:image/jpeg') || finalCoverDataURL.startsWith('data:image/gif'))) {
@@ -2196,7 +2196,7 @@ async function openExportModal() {
                     const extension = mimeTypeMatch[2] === 'jpeg' ? 'jpg' : mimeTypeMatch[2];
                     const base64Data = finalCoverDataURL.substring(mimeTypeMatch[0].length);
                     const coverFilename = `cover.${extension}`;
-                    console.log(`Adding cover image: images/${coverFilename}`);
+                    // console.log(`Adding cover image: images/${coverFilename}`);
                     imagesFolder.file(coverFilename, base64Data, { base64: true });
                     oebpsFolder.file("cover.xhtml", generateCoverXHTML(coverFilename, exportLanguage));
                     coverMetaInfo = { filename: coverFilename, mimeType: mimeType, id: "cover-image" };
@@ -2209,21 +2209,21 @@ async function openExportModal() {
                 await showConfirm({title: "Cover Warning", message: "Unsupported cover image format. Only PNG, JPG, GIF are reliably supported for EPUB covers. EPUB will be generated without cover.", okText: "OK"});
             }
 
-            console.log('Processing chapters for EPUB...');
+            // console.log('Processing chapters for EPUB...');
             chaptersToExport.forEach(ch => {
                 const chapterFilename = sanitizeFilename(`chapter-${ch.order}_${ch.title || 'chapter-' + ch.order}`) + ".xhtml";
-                console.log(`Adding chapter to EPUB: ${chapterFilename}`);
+                // console.log(`Adding chapter to EPUB: ${chapterFilename}`);
                 oebpsFolder.file(chapterFilename, generateChapterXHTML(ch, exportLanguage));
             });
 
-            console.log('Generating content.opf...');
+            // console.log('Generating content.opf...');
             oebpsFolder.file("content.opf", generateContentOPF(novel, exportTitle, exportAuthor, exportLanguage, chaptersToExport, coverMetaInfo));
-            console.log('Generating toc.ncx...');
+            // console.log('Generating toc.ncx...');
             oebpsFolder.file("toc.ncx", generateTocNCX(novel, exportTitle, chaptersToExport));
 
-            console.log('Generating EPUB blob...');
+            // console.log('Generating EPUB blob...');
             const epubBlob = await zip.generateAsync({ type: 'blob', mimeType: "application/epub+zip" });
-            console.log('EPUB blob generated. Triggering download...');
+            // console.log('EPUB blob generated. Triggering download...');
             const link = document.createElement('a');
             link.href = URL.createObjectURL(epubBlob);
             link.download = `${sanitizeFilename(exportTitle)}.epub`;
@@ -2242,23 +2242,23 @@ async function openExportModal() {
     });
 
     downloadZIPBtn.addEventListener('click', async () => {
-        console.log('Download ZIP (Markdown) button clicked');
-        console.log('Attempting to set "Processing export..." status for MD ZIP');
+        // console.log('Download ZIP (Markdown) button clicked');
+        // console.log('Attempting to set "Processing export..." status for MD ZIP');
         updateSaveStatus("Processing export...", "saving");
-        console.log('Export function (MD ZIP) entered. Checking libraries...');
+        // console.log('Export function (MD ZIP) entered. Checking libraries...');
         if (typeof JSZip === 'undefined' || typeof TurndownService === 'undefined') {
             await showConfirm({title: "Export Error", message: "Required library (JSZip or Turndown) is not available for Markdown export. Please check your internet connection or try refreshing.", okText: "OK"});
             updateSaveStatus("Export failed: Library missing (JSZip/Turndown).", "error", 7000);
             return;
         }
-        console.log('Getting selected chapters for MD ZIP...');
+        // console.log('Getting selected chapters for MD ZIP...');
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
             updateSaveStatus("Export failed: No chapters selected.", "error", 7000);
             return;
         }
-        console.log('Handling novel metadata update for MD ZIP...');
+        // console.log('Handling novel metadata update for MD ZIP...');
         const metadataUpdateCanProceed = await handleNovelMetadataUpdate("MD ZIP export");
          if (!metadataUpdateCanProceed) {
              updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
@@ -2268,29 +2268,29 @@ async function openExportModal() {
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
         const exportLanguage = novel.language || 'en-US';
-        console.log('Starting MD ZIP generation process...');
+        // console.log('Starting MD ZIP generation process...');
 
         try {
             const zip = new JSZip();
             const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced', bulletListMarker: '-' });
-            console.log('JSZip and TurndownService initialized.');
+            // console.log('JSZip and TurndownService initialized.');
 
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
             const updatedDate = novel.updatedAt ? new Date(novel.updatedAt).toLocaleDateString() : 'N/A';
             const metadataContent = `# ${exportTitle}\n\n**Author:** ${exportAuthor}\n**Language:** ${exportLanguage}\n**Created:** ${createdDate}\n**Last Updated:** ${updatedDate}\n**Exported Chapters:** ${chaptersToExport.length} (out of ${novel.chapters.length} total)\n---\n`;
             zip.file('novel_metadata.md', metadataContent.trim());
-            console.log('novel_metadata.md added.');
+            // console.log('novel_metadata.md added.');
 
 
             chaptersToExport.forEach((ch) => {
                 const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`;
-                console.log(`Processing chapter for MD: ${base}`);
+                // console.log(`Processing chapter for MD: ${base}`);
                 const md = turndownService.turndown(ch.contentHTML || '');
                 zip.file(`${base}.md`, md);
             });
-            console.log('Generating MD ZIP blob...');
+            // console.log('Generating MD ZIP blob...');
             const blob = await zip.generateAsync({ type: 'blob' });
-            console.log('MD ZIP blob generated. Triggering download...');
+            // console.log('MD ZIP blob generated. Triggering download...');
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `${sanitizeFilename(exportTitle)}_Markdown.zip`;
@@ -2308,23 +2308,23 @@ async function openExportModal() {
     });
 
     downloadTXTZipBtn.addEventListener('click', async () => {
-        console.log('Download ZIP (Text) button clicked');
-        console.log('Attempting to set "Processing export..." status for TXT ZIP');
+        // console.log('Download ZIP (Text) button clicked');
+        // console.log('Attempting to set "Processing export..." status for TXT ZIP');
         updateSaveStatus("Processing export...", "saving");
-        console.log('Export function (TXT ZIP) entered. Checking libraries...');
+        // console.log('Export function (TXT ZIP) entered. Checking libraries...');
         if (typeof JSZip === 'undefined') {
             await showConfirm({title: "Export Error", message: "ZIP library (JSZip) is not available for Text export. Please check your internet connection or try refreshing.", okText: "OK"});
             updateSaveStatus("Export failed: JSZip library missing.", "error", 7000);
             return;
         }
-        console.log('Getting selected chapters for TXT ZIP...');
+        // console.log('Getting selected chapters for TXT ZIP...');
         const chaptersToExport = getSelectedChapters();
         if (chaptersToExport.length === 0) {
             await showConfirm({ title: "Export Error", message: "Please select at least one chapter to export.", okText: "OK" });
             updateSaveStatus("Export failed: No chapters selected.", "error", 7000);
             return;
         }
-        console.log('Handling novel metadata update for TXT ZIP...');
+        // console.log('Handling novel metadata update for TXT ZIP...');
         const metadataUpdateCanProceed = await handleNovelMetadataUpdate("TXT ZIP export");
         if (!metadataUpdateCanProceed) {
             updateSaveStatus("Export cancelled: Invalid metadata.", "warning", 7000);
@@ -2334,27 +2334,27 @@ async function openExportModal() {
         const exportTitle = novel.title || 'Untitled Novel';
         const exportAuthor = novel.author || currentSettings.defaultAuthor || 'Unknown Author';
         const exportLanguage = novel.language || 'en-US';
-        console.log('Starting TXT ZIP generation process...');
+        // console.log('Starting TXT ZIP generation process...');
 
         try {
             const zip = new JSZip();
-            console.log('JSZip initialized for TXT.');
+            // console.log('JSZip initialized for TXT.');
 
             const createdDate = novel.createdAt ? new Date(novel.createdAt).toLocaleDateString() : 'N/A';
             const updatedDate = novel.updatedAt ? new Date(novel.updatedAt).toLocaleDateString() : 'N/A';
             const metadataContent = `Title: ${exportTitle}\nAuthor: ${exportAuthor}\nLanguage: ${exportLanguage}\nCreated: ${createdDate}\nLast Updated: ${updatedDate}\nExported Chapters: ${chaptersToExport.length} (out of ${novel.chapters.length} total)\n---\n`;
             zip.file('novel_metadata.txt', metadataContent);
-            console.log('novel_metadata.txt added for TXT ZIP.');
+            // console.log('novel_metadata.txt added for TXT ZIP.');
 
             chaptersToExport.forEach((ch) => {
                 const base = `${String(ch.order).padStart(3,'0')}_${sanitizeFilename(ch.title || `chapter-${ch.order}`)}`;
-                console.log(`Processing chapter for TXT: ${base}`);
+                // console.log(`Processing chapter for TXT: ${base}`);
                 const txt = htmlToPlainText(ch.contentHTML || '');
                 zip.file(`${base}.txt`, `Chapter ${ch.order}: ${ch.title || 'Untitled Chapter'}\n\n${txt}`);
             });
-            console.log('Generating TXT ZIP blob...');
+            // console.log('Generating TXT ZIP blob...');
             const blob = await zip.generateAsync({ type: 'blob' });
-            console.log('TXT ZIP blob generated. Triggering download...');
+            // console.log('TXT ZIP blob generated. Triggering download...');
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = `${sanitizeFilename(exportTitle)}_PlainText.zip`;
