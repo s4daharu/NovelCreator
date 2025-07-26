@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Patreon Post Scheduler</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <!-- Google Font: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .copied {
+      background-color: rgba(16, 185, 129, 0.1) !important;
+      border-color: rgba(16, 185, 129, 0.3) !important;
+      color: #059669 !important;
+    }
+    
+    /* Custom mobile improvements */
+    @media (max-width: 640px) {
+      .mobile-padding {
+        padding: 1rem;
+      }
+      .mobile-text-sm {
+        font-size: 0.875rem;
+      }
+      .mobile-gap {
+        gap: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen p-3 sm:p-6">
+  <div class="max-w-3xl mx-auto bg-white bg-opacity-95 rounded-2xl mobile-padding sm:p-8 shadow-2xl backdrop-blur-md">
+    <h1 class="text-2xl sm:text-4xl text-center font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500 mb-6 sm:mb-8">
+      📅 Patreon Post Scheduler
+    </h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+      <div class="flex flex-col">
+        <label for="startDate" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Start Date:</label>
+        <input type="date" id="startDate" required class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+      <div class="flex flex-col">
+        <label for="chaptersPerPost" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Chapters Per Post:</label>
+        <input type="number" id="chaptersPerPost" min="1" max="50" value="2" required class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+      <div class="flex flex-col">
+        <label for="delayBetween" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Delay Between Chapters (days):</label>
+        <input type="number" id="delayBetween" min="1" max="365" value="2" required class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+      <div class="flex flex-col">
+        <label for="chapterPattern" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Chapter Title Pattern:</label>
+        <input type="text" id="chapterPattern" value="Raising Kids C" class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+      <div class="flex flex-col">
+        <label for="chapterStart" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Chapter Start Number:</label>
+        <input type="number" id="chapterStart" min="1" max="9999" value="1" required class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+      <div class="flex flex-col">
+        <label for="chapterEnd" class="font-semibold text-gray-600 mb-2 text-sm sm:text-base">Chapter End Number:</label>
+        <input type="number" id="chapterEnd" min="1" max="9999" value="10" required class="p-3 sm:p-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base" />
+      </div>
+    </div>
+
+    <div class="text-center mb-6 sm:mb-8">
+      <button onclick="generateSchedule()" class="w-full sm:w-auto bg-gradient-to-r from-indigo-400 to-purple-500 text-white py-4 sm:py-3 px-8 sm:px-6 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition min-h-[48px] touch-manipulation">
+        Generate Schedule
+      </button>
+    </div>
+
+    <div id="results" class="hidden">
+      <h2 class="text-xl sm:text-2xl text-center font-semibold text-gray-700 mb-4 sm:mb-6">📋 Your Posting Schedule</h2>
+      <div id="scheduleList"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('startDate').valueAsDate = new Date();
+
+    function padChapter(num) {
+      return num.toString().padStart(2, '0');
+    }
+
+    function generateSchedule() {
+      const resultsDiv = document.getElementById('results');
+      const scheduleList = document.getElementById('scheduleList');
+      scheduleList.innerHTML = '';
+
+      const startDate = new Date(document.getElementById('startDate').value);
+      const chaptersPerPost = parseInt(document.getElementById('chaptersPerPost').value);
+      const delayBetween = parseInt(document.getElementById('delayBetween').value);
+      const chapterStart = parseInt(document.getElementById('chapterStart').value);
+      const chapterEnd = parseInt(document.getElementById('chapterEnd').value);
+      const chapterPattern = document.getElementById('chapterPattern').value.trim();
+
+      if (!startDate || isNaN(startDate.getTime())) {
+        showError('Please select a valid start date.');
+        return;
+      }
+      if (chaptersPerPost < 1 || delayBetween < 1 || chapterStart < 1 || chapterEnd < 1) {
+        showError('All numeric values must be greater than 0.');
+        return;
+      }
+      if (chapterEnd < chapterStart) {
+        showError('Chapter end number must be greater than or equal to chapter start number.');
+        return;
+      }
+
+      const totalChapters = chapterEnd - chapterStart + 1;
+      const totalPosts = Math.ceil(totalChapters / chaptersPerPost);
+      const delayBetweenPosts = chaptersPerPost * delayBetween;
+
+      let currentDate = new Date(startDate);
+      let currentChapter = chapterStart;
+
+      for (let post = 0; post < totalPosts; post++) {
+        const fromChapter = currentChapter;
+        const toChapter = Math.min(currentChapter + chaptersPerPost - 1, chapterEnd);
+
+        const item = document.createElement('div');
+        item.className = 'relative bg-white rounded-xl p-4 sm:p-5 mb-4 shadow-md border-l-4 border-indigo-400 transition hover:translate-x-1 hover:shadow-lg';
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const postDate = new Date(currentDate);
+        postDate.setHours(0, 0, 0, 0);
+        const daysDiff = Math.floor((postDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff >= 0) {
+          const countdown = document.createElement('div');
+          countdown.className = 'absolute top-2 sm:top-3 right-3 sm:right-5 bg-indigo-500 text-white text-xs font-semibold px-2 py-1 rounded-md';
+          if (daysDiff === 0) countdown.textContent = 'Today';
+          else if (daysDiff === 1) countdown.textContent = 'Tomorrow';
+          else countdown.textContent = `${daysDiff} days`;
+          item.appendChild(countdown);
+        }
+
+        const weekday = document.createElement('div');
+        weekday.className = 'text-xs sm:text-sm text-gray-500 mb-1';
+        weekday.textContent = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+        const dateDiv = document.createElement('div');
+        dateDiv.className = 'font-bold text-indigo-600 mb-2 text-sm sm:text-base';
+        dateDiv.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+        const display = fromChapter === toChapter
+          ? `${chapterPattern}${padChapter(fromChapter)}`
+          : `${chapterPattern}${padChapter(fromChapter)}-${padChapter(toChapter)}`;
+
+        const chapDiv = document.createElement('div');
+        chapDiv.className = 'cursor-pointer p-3 sm:p-3 rounded-lg border border-indigo-200 bg-indigo-50 min-h-[48px] flex items-center touch-manipulation text-sm sm:text-base active:bg-indigo-100';
+        chapDiv.textContent = display;
+        chapDiv.addEventListener('click', () => copyChapterText(chapDiv, display));
+        chapDiv.addEventListener('touchstart', () => {}); // Enable :active on iOS
+
+        // Add tap instruction for mobile
+        const tapHint = document.createElement('div');
+        tapHint.className = 'text-xs text-gray-500 mt-1 sm:hidden';
+        tapHint.textContent = 'Tap to copy';
+
+        item.appendChild(weekday);
+        item.appendChild(dateDiv);
+        item.appendChild(chapDiv);
+        item.appendChild(tapHint);
+        scheduleList.appendChild(item);
+
+        if (post < totalPosts - 1) currentDate.setDate(currentDate.getDate() + delayBetweenPosts);
+        currentChapter = toChapter + 1;
+      }
+
+      resultsDiv.classList.remove('hidden');
+    }
+
+    function copyChapterText(el, text) {
+      if (el.classList.contains('copied')) return;
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+          showCopySuccess(el);
+        }).catch(() => fallbackCopy(el, text));
+      } else {
+        fallbackCopy(el, text);
+      }
+    }
+
+    function showCopySuccess(el) {
+      el.classList.add('copied');
+      
+      // Show temporary feedback
+      const originalText = el.textContent;
+      el.textContent = '✓ Copied!';
+      
+      setTimeout(() => {
+        el.textContent = originalText;
+        el.classList.remove('copied');
+      }, 2000);
+    }
+
+    function fallbackCopy(el, text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+          showCopySuccess(el);
+        } else {
+          alert('Copy not supported in this browser.');
+        }
+      } catch (err) {
+        alert('Copy not supported in this browser.');
+      }
+
+      document.body.removeChild(textArea);
+    }
+
+    function showError(msg) {
+      const list = document.getElementById('scheduleList');
+      list.innerHTML = `<div class="text-red-600 bg-red-100 p-4 rounded-lg mb-4 text-sm sm:text-base">${msg}</div>`;
+      document.getElementById('results').classList.remove('hidden');
+    }
+
+    document.addEventListener('keypress', e => {
+      if (e.key === 'Enter') generateSchedule();
+    });
+
+    // Prevent zoom on iOS when focusing inputs
+    document.addEventListener('touchstart', function() {}, true);
+  </script>
+</body>
+</html>
